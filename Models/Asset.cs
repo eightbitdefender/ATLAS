@@ -5,7 +5,15 @@ namespace ATLAS.Models;
 // ── Status & Category Enums ──────────────────────────────────────────────────
 
 public enum AssetStatus   { Active, Inactive, Decommissioned, Unknown }
-public enum AssetCategory { Computer, NetworkDevice, Printer, SoftwareApplication, MobileDevice, CloudResource }
+public enum AssetCategory
+{
+    Computer,
+    [Display(Name = "Network Device")]    NetworkDevice,
+    Printer,
+    [Display(Name = "Software Application")] SoftwareApplication,
+    [Display(Name = "Mobile Device")]     MobileDevice,
+    [Display(Name = "Cloud Resource")]    CloudResource
+}
 
 // ── Type-specific Sub-Enums ───────────────────────────────────────────────────
 

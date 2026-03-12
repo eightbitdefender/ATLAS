@@ -299,8 +299,8 @@
             }
             var categorySelect = document.getElementById('Category');
             if (categorySelect) {
-                categorySelect.addEventListener('change', function (e) { showSection(e.target.options[e.target.selectedIndex].text); });
-                showSection(categorySelect.options[categorySelect.selectedIndex].text);
+                categorySelect.addEventListener('change', function (e) { showSection(e.target.options[e.target.selectedIndex].text.replace(/\s+/g, '')); });
+                showSection(categorySelect.options[categorySelect.selectedIndex].text.replace(/\s+/g, ''));
             } else {
                 showSection(categoryVal);
             }

@@ -278,7 +278,7 @@
         (function () {
             var categorySelect = document.getElementById('Category');
             function showSection(sel) {
-                var text = sel.options[sel.selectedIndex].text;
+                var text = sel.options[sel.selectedIndex].text.replace(/\s+/g, '');
                 document.querySelectorAll('.asset-type-section').forEach(function (s) {
                     s.classList.add('d-none');
                 });
