@@ -1,0 +1,149 @@
+@model IEnumerable<CMDB.Models.Vulnerability>
+@{
+    ViewData["Title"] = "Vulnerabilities";
+}
+
+@* ── Result alerts (set by SyncFromNvd redirect) ─────────────────────────── *@
+@if (TempData["SyncSuccess"] is string ok)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        ✔ @ok
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["SyncError"] is string err)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        ⚠ @err
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ── Page header ─────────────────────────────────────────────────────────── *@
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="mb-0">Vulnerability Library</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#syncPanel"
+                aria-expanded="false"
+                aria-controls="syncPanel">
+            &#8635; Sync from NVD
+        </button>
+        <a asp-action="Create" class="btn btn-danger">+ Add Manually</a>
+    </div>
+</div>
+
+@* ── NVD Sync panel ───────────────────────────────────────────────────────── *@
+<div class="collapse mb-3" id="syncPanel">
+    <div class="card border-primary shadow-sm">
+        <div class="card-header bg-primary text-white fw-semibold">
+            Sync CVEs from NIST National Vulnerability Database
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                Pulls <strong>all matching CVE records</strong> from the
+                <a href="https://nvd.nist.gov/developers/vulnerabilities" target="_blank" rel="noopener">
+                    NVD API 2.0
+                </a>
+                and upserts them into your library — new CVEs are added, existing ones are refreshed.
+                Leave both filters blank to sync the entire NVD database (~250 k CVEs).
+                Without an API key requests are rate-limited (~5 per 30 s); a full unfiltered sync will run
+                in the background for several hours. Add a free key in
+                <code>appsettings.json</code> → <code>"NvdApiKey"</code> to sync the full database in ~15 minutes.
+            </p>
+
+            <form asp-action="SyncFromNvd" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">
+                            Keyword <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <input type="text" name="keyword" class="form-control"
+                               placeholder="e.g. apache, log4j, windows" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Severity filter <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <select name="severity" class="form-select">
+                            <option value="">— All severities —</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100"
+                                onclick="this.disabled=true; this.innerText='Syncing\u2026'; this.form.submit();">
+                            &#8635; Start Sync
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ── Vulnerability table ──────────────────────────────────────────────────── *@
+<table class="table table-hover table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>CVE ID</th>
+            <th>Title</th>
+            <th>Severity</th>
+            <th>CVSS</th>
+            <th>Affected Software</th>
+            <th>Affected Assets</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var v in Model)
+        {
+            <tr>
+                <td>
+                    @if (v.CveId != null)
+                    {
+                        <a href="https://nvd.nist.gov/vuln/detail/@v.CveId"
+                           target="_blank" rel="noopener"
+                           class="font-monospace small text-decoration-none">
+                            @v.CveId
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+                <td><a asp-action="Details" asp-route-id="@v.Id">@v.Title</a></td>
+                <td><span class="severity-@v.Severity.ToString().ToLower()">@v.Severity</span></td>
+                <td>@(v.CvssScore?.ToString("F1") ?? "—")</td>
+                <td><small>@v.AffectedSoftware</small></td>
+                <td>@v.AssetVulnerabilities.Count</td>
+                <td>
+                    <a asp-action="Edit"   asp-route-id="@v.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@v.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    No vulnerabilities yet. Use <strong>Sync from NVD</strong> to import CVEs, or
+                    <a asp-action="Create">add one manually</a>.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p class="text-muted small">@Model.Count() vulnerabilities in library.</p>

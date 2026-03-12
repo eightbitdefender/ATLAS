@@ -1,0 +1,111 @@
+@model CMDB.Controllers.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2 class="mb-4">CMDB Dashboard</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-card-primary h-100">
+            <div class="card-body">
+                <div class="text-muted small">Total Assets</div>
+                <div class="fs-2 fw-bold">@Model.TotalAssets</div>
+                <div class="text-muted small">@Model.ActiveAssets active</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-card-warning h-100">
+            <div class="card-body">
+                <div class="text-muted small">Vulnerabilities</div>
+                <div class="fs-2 fw-bold">@Model.TotalVulnerabilities</div>
+                <div class="text-muted small">in library</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-card-danger h-100">
+            <div class="card-body">
+                <div class="text-muted small">Critical Open</div>
+                <div class="fs-2 fw-bold severity-critical">@Model.CriticalFindings</div>
+                <div class="text-muted small">findings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-card-success h-100">
+            <div class="card-body">
+                <div class="text-muted small">Total Open Findings</div>
+                <div class="fs-2 fw-bold">@Model.OpenFindings</div>
+                <div class="text-muted small">@Model.HighFindings high severity</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Recent Assets</strong>
+                <a asp-controller="Assets" asp-action="Create" class="btn btn-sm btn-primary">+ Add Asset</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Name</th><th>Category</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.RecentAssets)
+                        {
+                            <tr>
+                                <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@a.Id">@a.Name</a></td>
+                                <td>@a.SubTypeLabel</td>
+                                <td>
+                                    <span class="badge bg-@(a.Status == CMDB.Models.AssetStatus.Active ? "success" : "secondary")">
+                                        @a.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.RecentAssets.Any())
+                        {
+                            <tr><td colspan="3" class="text-muted text-center py-3">No assets yet</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Recent Open Findings</strong>
+                <a asp-controller="Vulnerabilities" asp-action="Create" class="btn btn-sm btn-danger">+ Add Vuln</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Asset</th><th>Vulnerability</th><th>Severity</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var f in Model.RecentFindings)
+                        {
+                            <tr>
+                                <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@f.AssetId">@f.Asset.Name</a></td>
+                                <td><small>@f.Vulnerability.Title</small></td>
+                                <td><span class="severity-@f.Vulnerability.Severity.ToString().ToLower()">@f.Vulnerability.Severity</span></td>
+                            </tr>
+                        }
+                        @if (!Model.RecentFindings.Any())
+                        {
+                            <tr><td colspan="3" class="text-muted text-center py-3">No open findings</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

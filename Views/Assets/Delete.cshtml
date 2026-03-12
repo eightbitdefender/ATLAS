@@ -1,0 +1,28 @@
+@model CMDB.Models.Asset
+@{
+    ViewData["Title"] = "Delete Asset";
+}
+
+<h2>Delete Asset</h2>
+<div class="alert alert-danger">
+    Are you sure you want to delete <strong>@Model.Name</strong>?
+    This will also remove all associated vulnerability findings.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Name</dt>     <dd class="col-sm-9">@Model.Name</dd>
+    <dt class="col-sm-3">Category</dt> <dd class="col-sm-9">@Model.Category — @Model.SubTypeLabel</dd>
+    @if (!string.IsNullOrEmpty(Model.Identifier))
+    {
+        <dt class="col-sm-3">Identifier</dt><dd class="col-sm-9">@Model.Identifier</dd>
+    }
+    <dt class="col-sm-3">Owner</dt>  <dd class="col-sm-9">@(Model.Owner ?? "—")</dd>
+    <dt class="col-sm-3">Status</dt> <dd class="col-sm-9">@Model.Status</dd>
+</dl>
+
+<form asp-action="Delete">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" class="btn btn-link">Cancel</a>
+</form>

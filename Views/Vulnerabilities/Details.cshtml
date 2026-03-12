@@ -1,0 +1,61 @@
+@model CMDB.Models.Vulnerability
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@Model.Title</h2>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">CVE ID</dt><dd class="col-sm-9">@(Model.CveId ?? "—")</dd>
+            <dt class="col-sm-3">Severity</dt>
+            <dd class="col-sm-9"><span class="severity-@Model.Severity.ToString().ToLower() fs-5">@Model.Severity</span></dd>
+            <dt class="col-sm-3">CVSS Score</dt><dd class="col-sm-9">@(Model.CvssScore?.ToString("F1") ?? "—")</dd>
+            <dt class="col-sm-3">Affected Software</dt><dd class="col-sm-9">@(Model.AffectedSoftware ?? "—")</dd>
+            <dt class="col-sm-3">Discovered</dt><dd class="col-sm-9">@Model.DiscoveredAt.ToString("yyyy-MM-dd")</dd>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <dt class="col-sm-3">Description</dt><dd class="col-sm-9">@Model.Description</dd>
+            }
+            @if (!string.IsNullOrEmpty(Model.RemediationGuidance))
+            {
+                <dt class="col-sm-3">Remediation</dt><dd class="col-sm-9">@Model.RemediationGuidance</dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<h4>Affected Assets (@Model.AssetVulnerabilities.Count)</h4>
+<table class="table table-hover table-bordered">
+    <thead class="table-dark">
+        <tr><th>Asset</th><th>Status</th><th>Detected</th><th>Remediated</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var av in Model.AssetVulnerabilities)
+        {
+            <tr>
+                <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@av.AssetId">@av.Asset.Name</a></td>
+                <td>
+                    <span class="badge bg-@(av.Status == CMDB.Models.RemediationStatus.Open ? "danger" :
+                                            av.Status == CMDB.Models.RemediationStatus.InProgress ? "warning" :
+                                            av.Status == CMDB.Models.RemediationStatus.Remediated ? "success" : "secondary")">
+                        @av.Status
+                    </span>
+                </td>
+                <td><small>@av.DetectedAt.ToString("yyyy-MM-dd")</small></td>
+                <td><small>@(av.RemediatedAt?.ToString("yyyy-MM-dd") ?? "—")</small></td>
+                <td><small>@av.Notes</small></td>
+            </tr>
+        }
+        @if (!Model.AssetVulnerabilities.Any())
+        {
+            <tr><td colspan="5" class="text-center text-muted py-3">Not assigned to any assets.</td></tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-link">← Back to Vulnerabilities</a>

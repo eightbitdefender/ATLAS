@@ -1,0 +1,51 @@
+@model CMDB.Models.Vulnerability
+@{
+    ViewData["Title"] = "Add Vulnerability";
+}
+
+<h2 class="mb-4">Add Vulnerability</h2>
+
+<div class="row">
+    <div class="col-md-7">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="CveId" class="form-label">CVE ID (optional)</label>
+                <input asp-for="CveId" class="form-control" placeholder="e.g. CVE-2024-12345" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="row">
+                <div class="col mb-3">
+                    <label asp-for="Severity" class="form-label"></label>
+                    <select asp-for="Severity" asp-items="Html.GetEnumSelectList<CMDB.Models.Severity>()" class="form-select"></select>
+                </div>
+                <div class="col mb-3">
+                    <label asp-for="CvssScore" class="form-label">CVSS Score (0–10)</label>
+                    <input asp-for="CvssScore" class="form-control" type="number" step="0.1" min="0" max="10" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AffectedSoftware" class="form-label"></label>
+                <input asp-for="AffectedSoftware" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RemediationGuidance" class="form-label"></label>
+                <textarea asp-for="RemediationGuidance" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-danger">Save Vulnerability</button>
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

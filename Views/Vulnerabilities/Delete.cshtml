@@ -1,0 +1,20 @@
+@model CMDB.Models.Vulnerability
+@{
+    ViewData["Title"] = "Delete Vulnerability";
+}
+
+<h2>Delete Vulnerability</h2>
+<div class="alert alert-danger">Are you sure you want to delete <strong>@Model.Title</strong>? This will remove it from all affected assets.</div>
+
+<dl class="row">
+    <dt class="col-sm-3">CVE ID</dt><dd class="col-sm-9">@(Model.CveId ?? "—")</dd>
+    <dt class="col-sm-3">Title</dt><dd class="col-sm-9">@Model.Title</dd>
+    <dt class="col-sm-3">Severity</dt><dd class="col-sm-9">@Model.Severity</dd>
+    <dt class="col-sm-3">Affected Assets</dt><dd class="col-sm-9">@Model.AssetVulnerabilities.Count</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" class="btn btn-link">Cancel</a>
+</form>

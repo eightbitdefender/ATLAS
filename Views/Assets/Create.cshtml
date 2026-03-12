@@ -1,0 +1,294 @@
+@model CMDB.Models.AssetFormViewModel
+@{
+    ViewData["Title"] = "Add Asset";
+}
+
+<h2 class="mb-4">Add Asset</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-4">
+                <label asp-for="Category" class="form-label fw-semibold fs-5"></label>
+                <select asp-for="Category"
+                        asp-items="Html.GetEnumSelectList<CMDB.Models.AssetCategory>()"
+                        class="form-select form-select-lg" id="Category"></select>
+                <div class="form-text">Choose the asset category — related fields will appear below.</div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><strong>Common Information</strong></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"
+                                  placeholder="Purpose, role, or any relevant context."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="Status" class="form-label"></label>
+                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<CMDB.Models.AssetStatus>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="Owner" class="form-label"></label>
+                            <input asp-for="Owner" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="Department" class="form-label"></label>
+                            <input asp-for="Department" class="form-control" />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="Location" class="form-label"></label>
+                            <input asp-for="Location" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Computer -->
+            <div id="section-Computer" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Computer Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="ComputerType" class="form-label"></label>
+                            <select asp-for="ComputerType" asp-items="Html.GetEnumSelectList<CMDB.Models.ComputerType>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="IpAddress" class="form-label"></label>
+                            <input asp-for="IpAddress" class="form-control" placeholder="192.168.1.1" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="OperatingSystem" class="form-label"></label>
+                            <input asp-for="OperatingSystem" class="form-control" placeholder="Windows 11, Ubuntu 24.04..." />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="CpuModel" class="form-label"></label>
+                            <input asp-for="CpuModel" class="form-control" placeholder="Intel Core i7-13700K" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="RamGb" class="form-label"></label>
+                            <input asp-for="RamGb" class="form-control" type="number" min="1" placeholder="16" />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="SerialNumber" class="form-label"></label>
+                            <input asp-for="SerialNumber" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="DomainJoined" class="form-check-input" type="checkbox" />
+                        <label asp-for="DomainJoined" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Device -->
+            <div id="section-NetworkDevice" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Network Device Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="NetworkDeviceType" class="form-label"></label>
+                            <select asp-for="NetworkDeviceType" asp-items="Html.GetEnumSelectList<CMDB.Models.NetworkDeviceType>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="IpAddress" class="form-label"></label>
+                            <input asp-for="IpAddress" class="form-control" placeholder="192.168.1.1" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="MacAddress" class="form-label"></label>
+                            <input asp-for="MacAddress" class="form-control" placeholder="AA:BB:CC:DD:EE:FF" />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="Firmware" class="form-label"></label>
+                            <input asp-for="Firmware" class="form-control" placeholder="15.3.1" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="PortCount" class="form-label"></label>
+                            <input asp-for="PortCount" class="form-control" type="number" min="1" />
+                        </div>
+                        <div class="col mb-3 d-flex align-items-end pb-2">
+                            <div class="form-check">
+                                <input asp-for="Managed" class="form-check-input" type="checkbox" />
+                                <label asp-for="Managed" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Printer -->
+            <div id="section-Printer" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Printer Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="PrinterType" class="form-label"></label>
+                            <select asp-for="PrinterType" asp-items="Html.GetEnumSelectList<CMDB.Models.PrinterType>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="IpAddress" class="form-label"></label>
+                            <input asp-for="IpAddress" class="form-control" placeholder="192.168.1.50" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PrinterModel" class="form-label"></label>
+                        <input asp-for="PrinterModel" class="form-control" placeholder="HP LaserJet Pro M404n" />
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-check">
+                                <input asp-for="ColorCapable" class="form-check-input" type="checkbox" />
+                                <label asp-for="ColorCapable" class="form-check-label"></label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-check">
+                                <input asp-for="NetworkConnected" class="form-check-input" type="checkbox" />
+                                <label asp-for="NetworkConnected" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Software Application -->
+            <div id="section-SoftwareApplication" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Application Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="ApplicationType" class="form-label"></label>
+                            <select asp-for="ApplicationType" asp-items="Html.GetEnumSelectList<CMDB.Models.ApplicationType>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="Vendor" class="form-label"></label>
+                            <input asp-for="Vendor" class="form-control" placeholder="Microsoft, Atlassian..." />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="Version" class="form-label"></label>
+                            <input asp-for="Version" class="form-control" placeholder="2.4.1" />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="LicenseType" class="form-label"></label>
+                            <input asp-for="LicenseType" class="form-control" placeholder="Enterprise, SaaS, Open Source..." />
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label asp-for="Url" class="form-label"></label>
+                        <input asp-for="Url" class="form-control" placeholder="https://app.example.com" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Device -->
+            <div id="section-MobileDevice" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Mobile Device Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="MobileDeviceType" class="form-label"></label>
+                            <select asp-for="MobileDeviceType" asp-items="Html.GetEnumSelectList<CMDB.Models.MobileDeviceType>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="OperatingSystem" class="form-label"></label>
+                            <input asp-for="OperatingSystem" class="form-control" placeholder="iOS 17, Android 14..." />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="Imei" class="form-label"></label>
+                            <input asp-for="Imei" class="form-control" />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="+1 555-0100" />
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label asp-for="Carrier" class="form-label"></label>
+                        <input asp-for="Carrier" class="form-control" placeholder="Verizon, AT&amp;T..." />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud Resource -->
+            <div id="section-CloudResource" class="asset-type-section card mb-4 d-none">
+                <div class="card-header"><strong>Cloud Resource Details</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="CloudProvider" class="form-label"></label>
+                            <select asp-for="CloudProvider" asp-items="Html.GetEnumSelectList<CMDB.Models.CloudProvider>()" class="form-select"></select>
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="ResourceType" class="form-label"></label>
+                            <input asp-for="ResourceType" class="form-control" placeholder="EC2, S3, App Service..." />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label asp-for="Region" class="form-label"></label>
+                            <input asp-for="Region" class="form-control" placeholder="us-east-1, eastus..." />
+                        </div>
+                        <div class="col mb-3">
+                            <label asp-for="AccountId" class="form-label"></label>
+                            <input asp-for="AccountId" class="form-control" placeholder="123456789012" />
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label asp-for="ResourceId" class="form-label"></label>
+                        <input asp-for="ResourceId" class="form-control" placeholder="arn:aws:ec2:us-east-1:123456789012:instance/i-0abc123" />
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Asset</button>
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (function () {
+            var categorySelect = document.getElementById('Category');
+            function showSection(sel) {
+                var text = sel.options[sel.selectedIndex].text;
+                document.querySelectorAll('.asset-type-section').forEach(function (s) {
+                    s.classList.add('d-none');
+                });
+                var el = document.getElementById('section-' + text);
+                if (el) el.classList.remove('d-none');
+            }
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function (e) { showSection(e.target); });
+                showSection(categorySelect);
+            }
+        })();
+    </script>
+}

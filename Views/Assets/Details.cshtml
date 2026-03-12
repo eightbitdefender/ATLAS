@@ -1,0 +1,217 @@
+@model CMDB.Models.Asset
+@{
+    ViewData["Title"] = Model.Name;
+    var grouped = Model.AssetVulnerabilities
+        .GroupBy(av => av.Status)
+        .ToDictionary(g => g.Key, g => g.Count());
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2>@Model.Name</h2>
+        <small class="text-muted">@Model.Category — @Model.SubTypeLabel</small>
+    </div>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+        <a asp-controller="AssetVulnerabilities" asp-action="Create" asp-route-assetId="@Model.Id" class="btn btn-danger">+ Assign Vulnerability</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Common Info Card -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><strong>Asset Info</strong></div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p class="text-muted mb-3">@Model.Description</p>
+                    <hr class="mt-0 mb-3" />
+                }
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Category</dt>
+                    <dd class="col-sm-8">@Model.Category — @Model.SubTypeLabel</dd>
+                    <dt class="col-sm-4">Owner</dt>
+                    <dd class="col-sm-8">@(Model.Owner ?? "—")</dd>
+                    <dt class="col-sm-4">Department</dt>
+                    <dd class="col-sm-8">@(Model.Department ?? "—")</dd>
+                    <dt class="col-sm-4">Location</dt>
+                    <dd class="col-sm-8">@(Model.Location ?? "—")</dd>
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-@(Model.Status == CMDB.Models.AssetStatus.Active ? "success" : "secondary")">@Model.Status</span>
+                    </dd>
+                    <dt class="col-sm-4">Added</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+                    @if (Model.LastUpdated.HasValue)
+                    {
+                        <dt class="col-sm-4">Updated</dt>
+                        <dd class="col-sm-8">@Model.LastUpdated.Value.ToString("yyyy-MM-dd")</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <dt class="col-sm-4">Notes</dt>
+                        <dd class="col-sm-8">@Model.Notes</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type-specific Details Card -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            @if (Model is CMDB.Models.Computer comp)
+            {
+                <div class="card-header"><strong>Computer Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Type</dt>       <dd class="col-sm-7">@comp.ComputerType</dd>
+                        <dt class="col-sm-5">IP Address</dt> <dd class="col-sm-7">@(comp.IpAddress ?? "—")</dd>
+                        <dt class="col-sm-5">OS</dt>         <dd class="col-sm-7">@(comp.OperatingSystem ?? "—")</dd>
+                        <dt class="col-sm-5">CPU</dt>        <dd class="col-sm-7">@(comp.CpuModel ?? "—")</dd>
+                        <dt class="col-sm-5">RAM</dt>        <dd class="col-sm-7">@(comp.RamGb.HasValue ? comp.RamGb + " GB" : "—")</dd>
+                        <dt class="col-sm-5">Serial #</dt>   <dd class="col-sm-7">@(comp.SerialNumber ?? "—")</dd>
+                        <dt class="col-sm-5">Domain Joined</dt>
+                        <dd class="col-sm-7">
+                            @if (comp.DomainJoined) { <span class="badge bg-success">Yes</span> } else { <span class="text-muted">No</span> }
+                        </dd>
+                    </dl>
+                </div>
+            }
+            else if (Model is CMDB.Models.NetworkDevice nd)
+            {
+                <div class="card-header"><strong>Network Device Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Device Type</dt><dd class="col-sm-7">@nd.NetworkDeviceType</dd>
+                        <dt class="col-sm-5">IP Address</dt> <dd class="col-sm-7">@(nd.IpAddress ?? "—")</dd>
+                        <dt class="col-sm-5">MAC Address</dt><dd class="col-sm-7">@(nd.MacAddress ?? "—")</dd>
+                        <dt class="col-sm-5">Firmware</dt>   <dd class="col-sm-7">@(nd.Firmware ?? "—")</dd>
+                        <dt class="col-sm-5">Ports</dt>      <dd class="col-sm-7">@(nd.PortCount.HasValue ? nd.PortCount.ToString() : "—")</dd>
+                        <dt class="col-sm-5">Managed</dt>
+                        <dd class="col-sm-7">
+                            @if (nd.Managed) { <span class="badge bg-success">Yes</span> } else { <span class="text-muted">No</span> }
+                        </dd>
+                    </dl>
+                </div>
+            }
+            else if (Model is CMDB.Models.Printer pr)
+            {
+                <div class="card-header"><strong>Printer Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Printer Type</dt>  <dd class="col-sm-7">@pr.PrinterType</dd>
+                        <dt class="col-sm-5">Model</dt>         <dd class="col-sm-7">@(pr.Model ?? "—")</dd>
+                        <dt class="col-sm-5">IP Address</dt>    <dd class="col-sm-7">@(pr.IpAddress ?? "—")</dd>
+                        <dt class="col-sm-5">Color</dt>
+                        <dd class="col-sm-7">@if (pr.ColorCapable) { <span class="badge bg-success">Yes</span> } else { <span class="text-muted">No</span> }</dd>
+                        <dt class="col-sm-5">Networked</dt>
+                        <dd class="col-sm-7">@if (pr.NetworkConnected) { <span class="badge bg-success">Yes</span> } else { <span class="text-muted">No</span> }</dd>
+                    </dl>
+                </div>
+            }
+            else if (Model is CMDB.Models.SoftwareApplication sa)
+            {
+                <div class="card-header"><strong>Application Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">App Type</dt>    <dd class="col-sm-7">@sa.ApplicationType</dd>
+                        <dt class="col-sm-5">Vendor</dt>      <dd class="col-sm-7">@(sa.Vendor ?? "—")</dd>
+                        <dt class="col-sm-5">Version</dt>     <dd class="col-sm-7">@(sa.Version ?? "—")</dd>
+                        <dt class="col-sm-5">License</dt>     <dd class="col-sm-7">@(sa.LicenseType ?? "—")</dd>
+                        <dt class="col-sm-5">URL</dt>
+                        <dd class="col-sm-7">
+                            @if (!string.IsNullOrEmpty(sa.Url))
+                            {
+                                <a href="@sa.Url" target="_blank" rel="noopener">@sa.Url</a>
+                            }
+                            else { <span class="text-muted">—</span> }
+                        </dd>
+                    </dl>
+                </div>
+            }
+            else if (Model is CMDB.Models.MobileDevice md)
+            {
+                <div class="card-header"><strong>Mobile Device Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Device Type</dt><dd class="col-sm-7">@md.MobileDeviceType</dd>
+                        <dt class="col-sm-5">OS</dt>         <dd class="col-sm-7">@(md.OperatingSystem ?? "—")</dd>
+                        <dt class="col-sm-5">IMEI</dt>       <dd class="col-sm-7">@(md.Imei ?? "—")</dd>
+                        <dt class="col-sm-5">Phone #</dt>    <dd class="col-sm-7">@(md.PhoneNumber ?? "—")</dd>
+                        <dt class="col-sm-5">Carrier</dt>    <dd class="col-sm-7">@(md.Carrier ?? "—")</dd>
+                    </dl>
+                </div>
+            }
+            else if (Model is CMDB.Models.CloudResource cr)
+            {
+                <div class="card-header"><strong>Cloud Resource Details</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Provider</dt>     <dd class="col-sm-7">@cr.CloudProvider</dd>
+                        <dt class="col-sm-5">Resource Type</dt><dd class="col-sm-7">@(cr.ResourceType ?? "—")</dd>
+                        <dt class="col-sm-5">Region</dt>       <dd class="col-sm-7">@(cr.Region ?? "—")</dd>
+                        <dt class="col-sm-5">Account ID</dt>   <dd class="col-sm-7">@(cr.AccountId ?? "—")</dd>
+                        <dt class="col-sm-5">Resource ID</dt>  <dd class="col-sm-7"><small class="text-break">@(cr.ResourceId ?? "—")</small></dd>
+                    </dl>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Vulnerability Summary Card -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Vulnerability Summary</strong></div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li>Open: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.Open, 0))</strong></li>
+                    <li>In Progress: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.InProgress, 0))</strong></li>
+                    <li>Remediated: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.Remediated, 0))</strong></li>
+                    <li>Total: <strong>@Model.AssetVulnerabilities.Count</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Assigned Vulnerabilities</h4>
+<table class="table table-hover table-bordered">
+    <thead class="table-dark">
+        <tr><th>CVE</th><th>Title</th><th>Severity</th><th>CVSS</th><th>Status</th><th>Detected</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var av in Model.AssetVulnerabilities.OrderBy(av => av.Vulnerability.Severity))
+        {
+            <tr>
+                <td><small>@(av.Vulnerability.CveId ?? "—")</small></td>
+                <td>@av.Vulnerability.Title</td>
+                <td><span class="severity-@av.Vulnerability.Severity.ToString().ToLower()">@av.Vulnerability.Severity</span></td>
+                <td>@(av.Vulnerability.CvssScore?.ToString("F1") ?? "—")</td>
+                <td>
+                    <span class="badge bg-@(av.Status == CMDB.Models.RemediationStatus.Open ? "danger" :
+                                            av.Status == CMDB.Models.RemediationStatus.InProgress ? "warning" :
+                                            av.Status == CMDB.Models.RemediationStatus.Remediated ? "success" : "secondary")">
+                        @av.Status
+                    </span>
+                </td>
+                <td><small>@av.DetectedAt.ToString("yyyy-MM-dd")</small></td>
+                <td>
+                    <a asp-controller="AssetVulnerabilities" asp-action="Edit" asp-route-id="@av.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <form asp-controller="AssetVulnerabilities" asp-action="Delete" asp-route-id="@av.Id" method="post" style="display:inline"
+                          onsubmit="return confirm('Remove this finding?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.AssetVulnerabilities.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted py-3">No vulnerabilities assigned.</td></tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-link">← Back to Assets</a>

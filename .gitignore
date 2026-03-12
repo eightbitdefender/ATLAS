@@ -1,0 +1,24 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+
+## SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+## macOS
+.DS_Store
+
+## Rider / JetBrains
+.idea/
+
+## Claude agent working directory
+.claude/
+
+## Published output
+publish/
