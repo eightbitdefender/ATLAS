@@ -1,62 +1,67 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ATLAS</title>
     <script type="importmap"></script>
+    <!-- Google Fonts: Playfair Display + Libre Franklin -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ATLAS.styles.css" asp-append-version="true" />
-    <style>
-        .severity-critical { color: #dc3545; font-weight: bold; }
-        .severity-high     { color: #fd7e14; font-weight: bold; }
-        .severity-medium   { color: #ffc107; }
-        .severity-low      { color: #0d6efd; }
-        .severity-info     { color: #6c757d; }
-        .stat-card         { border-left: 4px solid; }
-        .stat-card-danger  { border-left-color: #dc3545; }
-        .stat-card-warning { border-left-color: #fd7e14; }
-        .stat-card-primary { border-left-color: #0d6efd; }
-        .stat-card-success { border-left-color: #198754; }
-    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <!-- SMG red accent bar -->
+        <div style="background:#FF4C41; height:3px;"></div>
+        <nav class="navbar navbar-expand-sm navbar-light atlas-navbar border-bottom">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ATLAS</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <!-- SMG logo — height only, ratio preserved -->
+                <a class="navbar-brand d-flex align-items-center gap-3" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/smg-logo.png" alt="Staffmark Group" height="32" />
+                    <span class="atlas-brand-divider"></span>
+                    <span class="atlas-brand-name">ATLAS</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
+                            <a class="nav-link atlas-nav-link" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Assets" asp-action="Index">Assets</a>
+                            <a class="nav-link atlas-nav-link" asp-area="" asp-controller="Assets" asp-action="Index">Assets</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Vulnerabilities" asp-action="Index">Vulnerabilities</a>
+                            <a class="nav-link atlas-nav-link" asp-area="" asp-controller="Vulnerabilities" asp-action="Index">Vulnerabilities</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="container mt-4">
+        <main role="main" class="pb-4">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - ATLAS · Asset Tracking, Logging &amp; Administration System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="atlas-footer border-top mt-5">
+        <div class="container d-flex justify-content-between align-items-center py-3">
+            <img src="~/images/smg-logo.png" alt="Staffmark Group" height="20" />
+            <span class="atlas-footer-text">
+                &copy; 2026 ATLAS &mdash; Asset Tracking, Logging &amp; Administration System
+            </span>
+            <a class="atlas-footer-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

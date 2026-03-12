@@ -1,31 +1,255 @@
+/* ── SMG Brand Variables ─────────────────────────────────────────────────── */
+:root {
+    --smg-red:        #FF4C41;
+    --smg-red-dark:   #CC3D34;
+    --smg-blue:       #0098DB;
+    --smg-blue-dark:  #007AAF;
+    --smg-black:      #000000;
+    --smg-white:      #FFFFFF;
+    --smg-lgray:      #F6F5F5;
+    --smg-gray-dark:  #DBD8D7;
+    --smg-taupe:      #A69E9C;
+    --smg-taupe-dark: #857E7D;
+    --font-heading:   'Playfair Display', Georgia, serif;
+    --font-body:      'Libre Franklin', Calibri, Arial, sans-serif;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html { font-size: 16px; }
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--smg-black);
+    background-color: var(--smg-lgray);
+    margin-bottom: 80px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* ── Typography ──────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 400; /* Brand rule: Regular, not Bold */
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+h1 { color: var(--smg-red); }
+h2, h3 { color: var(--smg-black); }
+
+p, label, .form-label, td, th, li { font-family: var(--font-body); }
+
+a { color: var(--smg-blue); }
+a:hover { color: var(--smg-blue-dark); }
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.atlas-navbar {
+    background-color: var(--smg-white) !important;
+    padding: 0.6rem 1rem;
+}
+
+.atlas-brand-divider {
+    display: inline-block;
+    width: 1px;
+    height: 28px;
+    background: var(--smg-gray-dark);
+    vertical-align: middle;
+}
+
+.atlas-brand-name {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--smg-black);
+    letter-spacing: 0.08em;
+}
+
+.atlas-nav-link {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--smg-black) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem !important;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.atlas-nav-link:hover,
+.atlas-nav-link.active {
+    color: var(--smg-red) !important;
+    border-bottom-color: var(--smg-red);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.atlas-footer {
+    background-color: var(--smg-white);
+    border-top: 1px solid var(--smg-gray-dark) !important;
+}
+
+.atlas-footer-text {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--smg-taupe);
+}
+
+.atlas-footer-link {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--smg-blue);
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card {
+    border: 1px solid var(--smg-gray-dark);
+    border-radius: 4px;
+    background: var(--smg-white);
+}
+
+.card-header {
+    background-color: var(--smg-lgray);
+    border-bottom: 2px solid var(--smg-red);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--smg-black);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+    background-color: var(--smg-red);
+    border-color: var(--smg-red);
+    font-family: var(--font-body);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.btn-primary:hover, .btn-primary:active {
+    background-color: var(--smg-red-dark);
+    border-color: var(--smg-red-dark);
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 76, 65, 0.35);
+}
+
+.btn-secondary {
+    background-color: var(--smg-taupe);
+    border-color: var(--smg-taupe);
+    color: var(--smg-white);
+    font-family: var(--font-body);
+    font-weight: 700;
+}
+
+.btn-secondary:hover {
+    background-color: var(--smg-taupe-dark);
+    border-color: var(--smg-taupe-dark);
+}
+
+.btn-danger {
+    background-color: var(--smg-red-dark);
+    border-color: var(--smg-red-dark);
+}
+
+.btn-outline-primary {
+    color: var(--smg-red);
+    border-color: var(--smg-red);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--smg-red);
+    border-color: var(--smg-red);
+}
+
+.btn:focus, .btn:active:focus {
+    box-shadow: 0 0 0 0.1rem var(--smg-white), 0 0 0 0.25rem var(--smg-red);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.table thead th {
+    background-color: var(--smg-red);
+    color: var(--smg-white);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-color: var(--smg-red-dark);
+}
+
+.table tbody tr:nth-child(even) td {
+    background-color: var(--smg-lgray);
+}
+
+.table tbody tr:hover td {
+    background-color: #FDEEED;
+}
+
+.table td, .table th {
+    font-family: var(--font-body);
+    vertical-align: middle;
+}
+
+/* ── Forms ───────────────────────────────────────────────────────────────── */
+.form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--smg-black);
+}
+
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--smg-red);
+    box-shadow: 0 0 0 0.2rem rgba(255, 76, 65, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: var(--smg-red);
+    border-color: var(--smg-red);
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badge.bg-primary   { background-color: var(--smg-blue)   !important; }
+.badge.bg-danger    { background-color: var(--smg-red)    !important; }
+.badge.bg-secondary { background-color: var(--smg-taupe)  !important; }
+
+/* ── Severity classes (Vulnerabilities) ─────────────────────────────────── */
+.severity-critical { color: var(--smg-red);      font-weight: 700; }
+.severity-high     { color: var(--smg-red-dark); font-weight: 700; }
+.severity-medium   { color: #E07000; }
+.severity-low      { color: var(--smg-blue); }
+.severity-info     { color: var(--smg-taupe); }
+
+/* ── Dashboard stat cards ────────────────────────────────────────────────── */
+.stat-card          { border-left: 4px solid; background: var(--smg-white); }
+.stat-card-danger   { border-left-color: var(--smg-red); }
+.stat-card-warning  { border-left-color: #E07000; }
+.stat-card-primary  { border-left-color: var(--smg-blue); }
+.stat-card-success  { border-left-color: #198754; }
+
+/* ── Page container ──────────────────────────────────────────────────────── */
+.container > main {
+    background: var(--smg-white);
+    padding: 2rem;
+    border-radius: 4px;
+    border: 1px solid var(--smg-gray-dark);
+}
+
+/* ── Form floating placeholders ─────────────────────────────────────────── */
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--smg-taupe);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
 }
