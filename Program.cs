@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using CMDB.Data;
-using CMDB.Services;
+using ATLAS.Data;
+using ATLAS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<CmdbContext>(options =>
+builder.Services.AddDbContext<AtlasContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=cmdb.db"));
 
@@ -20,7 +20,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<CmdbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<AtlasContext>();
 
     // OO Refactor migration: if the Discriminator column is missing (old schema),
     // drop and recreate the database to apply the new TPH schema.

@@ -1,4 +1,4 @@
-@model IEnumerable<CMDB.Models.Asset>
+@model IEnumerable<ATLAS.Models.Asset>
 @{
     ViewData["Title"] = "Assets";
 }
@@ -24,7 +24,7 @@
     <tbody>
         @foreach (var a in Model)
         {
-            var openCount = a.AssetVulnerabilities.Count(av => av.Status == CMDB.Models.RemediationStatus.Open);
+            var openCount = a.AssetVulnerabilities.Count(av => av.Status == ATLAS.Models.RemediationStatus.Open);
             <tr>
                 <td><a asp-action="Details" asp-route-id="@a.Id">@a.Name</a></td>
                 <td>@a.Category</td>
@@ -32,7 +32,7 @@
                 <td><small class="text-muted">@(a.Identifier ?? "—")</small></td>
                 <td>@(a.Owner ?? "—")</td>
                 <td>
-                    <span class="badge bg-@(a.Status == CMDB.Models.AssetStatus.Active ? "success" : "secondary")">
+                    <span class="badge bg-@(a.Status == ATLAS.Models.AssetStatus.Active ? "success" : "secondary")">
                         @a.Status
                     </span>
                 </td>

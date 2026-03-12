@@ -1,17 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CMDB.Data;
-using CMDB.Models;
-using CMDB.Services;
+using ATLAS.Data;
+using ATLAS.Models;
+using ATLAS.Services;
 
-namespace CMDB.Controllers;
+namespace ATLAS.Controllers;
 
 public class VulnerabilitiesController : Controller
 {
-    private readonly CmdbContext    _db;
+    private readonly AtlasContext    _db;
     private readonly NvdSyncService _nvd;
 
-    public VulnerabilitiesController(CmdbContext db, NvdSyncService nvd)
+    public VulnerabilitiesController(AtlasContext db, NvdSyncService nvd)
     {
         _db  = db;
         _nvd = nvd;

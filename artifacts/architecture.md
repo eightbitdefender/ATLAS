@@ -29,7 +29,7 @@ Browser Request
 ┌───────────────────────┐   ┌──────────────────────────────┐
 │  Data Layer           │   │  View Layer                   │
 │                       │   │                               │
-│  CmdbContext          │   │  Razor Views (.cshtml)        │
+│  AtlasContext          │   │  Razor Views (.cshtml)        │
 │  (EF Core DbContext)  │   │  _Layout.cshtml (shared)      │
 │        │              │   │  Home/Index.cshtml            │
 │        ▼              │   │  Assets/{CRUD views}          │
@@ -46,7 +46,7 @@ Browser Request
 
 Bootstraps the entire application. Responsibilities:
 
-1. **Service registration** — registers MVC controllers+views, and `CmdbContext` with SQLite via dependency injection
+1. **Service registration** — registers MVC controllers+views, and `AtlasContext` with SQLite via dependency injection
 2. **Schema migration check** — probes `SELECT Discriminator FROM Assets LIMIT 1`; if the column is missing (pre-OO schema), calls `EnsureDeleted()` before `EnsureCreated()` to rebuild the database with the new TPH layout. See ADR-013.
 3. **Database initialization** — calls `db.Database.EnsureCreated()` on startup, creating `cmdb.db` and all tables if they do not exist
 4. **Middleware pipeline** — configures HTTPS redirect, static file serving, routing, and authorization in the correct order
@@ -87,7 +87,7 @@ Three abstract/virtual members on the base class enable polymorphic display in t
 
 See `data-model.md` for full field-level documentation.
 
-### Data/CmdbContext.cs — Database Context
+### Data/AtlasContext.cs — Database Context
 
 The single EF Core `DbContext` for the application. It:
 
@@ -100,7 +100,7 @@ EF Core translates LINQ queries against the `DbSet` properties into SQL and exec
 
 ### Controllers — Request Handlers
 
-Each controller is injected with `CmdbContext` and uses it directly. No service or repository layer sits between them (see ADR-003).
+Each controller is injected with `AtlasContext` and uses it directly. No service or repository layer sits between them (see ADR-003).
 
 | Controller | Actions | Notes |
 |------------|---------|-------|

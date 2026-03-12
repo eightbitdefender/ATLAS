@@ -1,4 +1,4 @@
-@model CMDB.Models.AssetFormViewModel
+@model ATLAS.Models.AssetFormViewModel
 @{
     ViewData["Title"] = "Edit — " + Model.Name;
 }
@@ -26,7 +26,7 @@
                 else
                 {
                     <select asp-for="Category"
-                            asp-items="Html.GetEnumSelectList<CMDB.Models.AssetCategory>()"
+                            asp-items="Html.GetEnumSelectList<ATLAS.Models.AssetCategory>()"
                             class="form-select form-select-lg" id="Category"></select>
                 }
             </div>
@@ -47,7 +47,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="Status" class="form-label"></label>
-                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<CMDB.Models.AssetStatus>()" class="form-select"></select>
+                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<ATLAS.Models.AssetStatus>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="Owner" class="form-label"></label>
@@ -78,7 +78,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="ComputerType" class="form-label"></label>
-                            <select asp-for="ComputerType" asp-items="Html.GetEnumSelectList<CMDB.Models.ComputerType>()" class="form-select"></select>
+                            <select asp-for="ComputerType" asp-items="Html.GetEnumSelectList<ATLAS.Models.ComputerType>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="IpAddress" class="form-label"></label>
@@ -119,7 +119,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="NetworkDeviceType" class="form-label"></label>
-                            <select asp-for="NetworkDeviceType" asp-items="Html.GetEnumSelectList<CMDB.Models.NetworkDeviceType>()" class="form-select"></select>
+                            <select asp-for="NetworkDeviceType" asp-items="Html.GetEnumSelectList<ATLAS.Models.NetworkDeviceType>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="IpAddress" class="form-label"></label>
@@ -158,7 +158,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="PrinterType" class="form-label"></label>
-                            <select asp-for="PrinterType" asp-items="Html.GetEnumSelectList<CMDB.Models.PrinterType>()" class="form-select"></select>
+                            <select asp-for="PrinterType" asp-items="Html.GetEnumSelectList<ATLAS.Models.PrinterType>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="IpAddress" class="form-label"></label>
@@ -193,7 +193,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="ApplicationType" class="form-label"></label>
-                            <select asp-for="ApplicationType" asp-items="Html.GetEnumSelectList<CMDB.Models.ApplicationType>()" class="form-select"></select>
+                            <select asp-for="ApplicationType" asp-items="Html.GetEnumSelectList<ATLAS.Models.ApplicationType>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="Vendor" class="form-label"></label>
@@ -224,7 +224,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="MobileDeviceType" class="form-label"></label>
-                            <select asp-for="MobileDeviceType" asp-items="Html.GetEnumSelectList<CMDB.Models.MobileDeviceType>()" class="form-select"></select>
+                            <select asp-for="MobileDeviceType" asp-items="Html.GetEnumSelectList<ATLAS.Models.MobileDeviceType>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="OperatingSystem" class="form-label"></label>
@@ -255,7 +255,7 @@
                     <div class="row">
                         <div class="col mb-3">
                             <label asp-for="CloudProvider" class="form-label"></label>
-                            <select asp-for="CloudProvider" asp-items="Html.GetEnumSelectList<CMDB.Models.CloudProvider>()" class="form-select"></select>
+                            <select asp-for="CloudProvider" asp-items="Html.GetEnumSelectList<ATLAS.Models.CloudProvider>()" class="form-select"></select>
                         </div>
                         <div class="col mb-3">
                             <label asp-for="ResourceType" class="form-label"></label>

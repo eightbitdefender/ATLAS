@@ -1,4 +1,4 @@
-@model CMDB.Models.Vulnerability
+@model ATLAS.Models.Vulnerability
 @{
     ViewData["Title"] = Model.Title;
 }
@@ -40,9 +40,9 @@
             <tr>
                 <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@av.AssetId">@av.Asset.Name</a></td>
                 <td>
-                    <span class="badge bg-@(av.Status == CMDB.Models.RemediationStatus.Open ? "danger" :
-                                            av.Status == CMDB.Models.RemediationStatus.InProgress ? "warning" :
-                                            av.Status == CMDB.Models.RemediationStatus.Remediated ? "success" : "secondary")">
+                    <span class="badge bg-@(av.Status == ATLAS.Models.RemediationStatus.Open ? "danger" :
+                                            av.Status == ATLAS.Models.RemediationStatus.InProgress ? "warning" :
+                                            av.Status == ATLAS.Models.RemediationStatus.Remediated ? "success" : "secondary")">
                         @av.Status
                     </span>
                 </td>

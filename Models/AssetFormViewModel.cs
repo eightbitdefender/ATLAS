@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CMDB.Models;
+namespace ATLAS.Models;
 
 /// <summary>
 /// Flat view-model used by the Create and Edit forms for all asset types.

@@ -1,4 +1,4 @@
-namespace CMDB.Models;
+namespace ATLAS.Models;
 
 // ── NVD CVE API 2.0 response DTOs ──────────────────────────────────────────
 // Docs: https://nvd.nist.gov/developers/vulnerabilities

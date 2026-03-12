@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using CMDB.Models;
+using ATLAS.Models;
 
-namespace CMDB.Data;
+namespace ATLAS.Data;
 
-public class CmdbContext : DbContext
+public class AtlasContext : DbContext
 {
-    public CmdbContext(DbContextOptions<CmdbContext> options) : base(options) { }
+    public AtlasContext(DbContextOptions<AtlasContext> options) : base(options) { }
 
     public DbSet<Asset>              Assets               => Set<Asset>();
     public DbSet<Vulnerability>      Vulnerabilities      => Set<Vulnerability>();

@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This document captures the significant design choices made when building the CMDB application, the alternatives that were considered, and the reasoning behind each decision.
+This document captures the significant design choices made when building the ATLAS application, the alternatives that were considered, and the reasoning behind each decision.
 
 ---
 
@@ -11,11 +11,11 @@ This document captures the significant design choices made when building the CMD
 
 ### Context
 
-The user's existing codebase (`ClassesFields`) is a .NET 8 console application used for learning C# classes and fields. The CMDB application is a web application with a completely different purpose, runtime model, and set of dependencies.
+The user's existing codebase (`ClassesFields`) is a .NET 8 console application used for learning C# classes and fields. The ATLAS application is a web application with a completely different purpose, runtime model, and set of dependencies.
 
 ### Decision
 
-Create the CMDB as an entirely separate project in its own directory (`/Users/snickers/CMDB`) rather than adding it to the existing `ClassesFIelds.sln`.
+Create the ATLAS as an entirely separate project in its own directory (`/Users/snickers/ATLAS`) rather than adding it to the existing `ClassesFIelds.sln`.
 
 ### Alternatives Considered
 
@@ -24,7 +24,7 @@ Create the CMDB as an entirely separate project in its own directory (`/Users/sn
 
 ### Consequences
 
-- The CMDB is independently buildable, runnable, and versioned
+- The ATLAS is independently buildable, runnable, and versioned
 - No risk of breaking the existing learning project
 - The user can open, run, or delete either project independently
 
@@ -49,7 +49,7 @@ Use **ASP.NET Core MVC with Razor Views** (the `Microsoft.NET.Sdk.Web` template)
 |--------|-------------------|
 | **Blazor Server** | Higher complexity; requires SignalR and persistent connections; overkill for simple CRUD forms |
 | **Blazor WebAssembly** | Requires separate API project or BFF layer; larger download footprint; unnecessary for a local tool |
-| **Razor Pages** | Valid alternative; MVC was chosen because the controller-per-entity pattern maps more naturally to a CMDB with multiple domain objects, and makes routing intentions explicit |
+| **Razor Pages** | Valid alternative; MVC was chosen because the controller-per-entity pattern maps more naturally to a ATLAS with multiple domain objects, and makes routing intentions explicit |
 | **Minimal API + SPA (React/Vue)** | Would require Node.js, a build pipeline, and a separate frontend; the added complexity is unjustified for a simple internal tool |
 
 ### Consequences
@@ -159,7 +159,7 @@ Use an **explicit join entity** (`AssetVulnerability`) with its own `DbSet`.
 
 ### Alternatives Considered
 
-- **Implicit many-to-many** (`Asset.Vulnerabilities` ↔ `Vulnerability.Assets` with EF Core managing the join table automatically) — This would be appropriate if the relationship carried no additional data. However, the core purpose of a CMDB is to track the *state* of each finding (remediation status, detection date, remediation date, notes). These fields cannot be placed on either side of an implicit join.
+- **Implicit many-to-many** (`Asset.Vulnerabilities` ↔ `Vulnerability.Assets` with EF Core managing the join table automatically) — This would be appropriate if the relationship carried no additional data. However, the core purpose of a ATLAS is to track the *state* of each finding (remediation status, detection date, remediation date, notes). These fields cannot be placed on either side of an implicit join.
 
 ### Consequences
 
@@ -254,7 +254,7 @@ Apply `[ValidateAntiForgeryToken]` to every `[HttpPost]` action, including the i
 
 ### Context
 
-Assets are not all computers. The CMDB needs to represent computers, network devices, printers, software applications, mobile devices, and cloud resources. Each type has a distinct set of relevant properties. A design decision was needed for how to model this in EF Core and SQLite.
+Assets are not all computers. The ATLAS needs to represent computers, network devices, printers, software applications, mobile devices, and cloud resources. Each type has a distinct set of relevant properties. A design decision was needed for how to model this in EF Core and SQLite.
 
 ### Decision
 

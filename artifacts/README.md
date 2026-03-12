@@ -1,4 +1,4 @@
-# CMDB — Configuration Management Database
+# ATLAS — Configuration Management Database
 
 A lightweight web application for tracking IT assets and their associated security vulnerabilities.
 
@@ -20,7 +20,7 @@ This application serves as a centralized record system for:
 ### Run
 
 ```bash
-cd /Users/snickers/CMDB
+cd /Users/snickers/ATLAS
 dotnet run
 ```
 
@@ -35,7 +35,7 @@ The SQLite database (`cmdb.db`) is created automatically on first run. No migrat
 ## Project Structure
 
 ```
-CMDB/
+ATLAS/
 ├── artifacts/                  # This documentation
 │   ├── README.md               # Overview and quickstart (this file)
 │   ├── architecture.md         # System components and how they fit together
@@ -72,7 +72,7 @@ CMDB/
 ├── wwwroot/                    # Static assets (Bootstrap 5, jQuery, site.css)
 ├── Program.cs                  # App bootstrap, DI registration, middleware pipeline
 ├── appsettings.json            # Connection string and logging config
-└── CMDB.csproj                 # Project file, NuGet package references
+└── ATLAS.csproj                 # Project file, NuGet package references
 ```
 
 ---

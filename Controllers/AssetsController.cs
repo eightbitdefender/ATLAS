@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CMDB.Data;
-using CMDB.Models;
+using ATLAS.Data;
+using ATLAS.Models;
 
-namespace CMDB.Controllers;
+namespace ATLAS.Controllers;
 
 public class AssetsController : Controller
 {
-    private readonly CmdbContext _db;
+    private readonly AtlasContext _db;
 
-    public AssetsController(CmdbContext db) => _db = db;
+    public AssetsController(AtlasContext db) => _db = db;
 
     // ── Index ────────────────────────────────────────────────────────────────
 

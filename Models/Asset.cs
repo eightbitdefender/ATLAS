@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CMDB.Models;
+namespace ATLAS.Models;
 
 // ── Status & Category Enums ──────────────────────────────────────────────────
 

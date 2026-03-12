@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using CMDB.Data;
-using CMDB.Models;
+using ATLAS.Data;
+using ATLAS.Models;
 
-namespace CMDB.Controllers;
+namespace ATLAS.Controllers;
 
 public class AssetVulnerabilitiesController : Controller
 {
-    private readonly CmdbContext _db;
+    private readonly AtlasContext _db;
 
-    public AssetVulnerabilitiesController(CmdbContext db) => _db = db;
+    public AssetVulnerabilitiesController(AtlasContext db) => _db = db;
 
     public async Task<IActionResult> Create(int? assetId)
     {

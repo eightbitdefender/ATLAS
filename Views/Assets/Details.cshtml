@@ -1,4 +1,4 @@
-@model CMDB.Models.Asset
+@model ATLAS.Models.Asset
 @{
     ViewData["Title"] = Model.Name;
     var grouped = Model.AssetVulnerabilities
@@ -39,7 +39,7 @@
                     <dd class="col-sm-8">@(Model.Location ?? "—")</dd>
                     <dt class="col-sm-4">Status</dt>
                     <dd class="col-sm-8">
-                        <span class="badge bg-@(Model.Status == CMDB.Models.AssetStatus.Active ? "success" : "secondary")">@Model.Status</span>
+                        <span class="badge bg-@(Model.Status == ATLAS.Models.AssetStatus.Active ? "success" : "secondary")">@Model.Status</span>
                     </dd>
                     <dt class="col-sm-4">Added</dt>
                     <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
@@ -61,7 +61,7 @@
     <!-- Type-specific Details Card -->
     <div class="col-md-6">
         <div class="card h-100">
-            @if (Model is CMDB.Models.Computer comp)
+            @if (Model is ATLAS.Models.Computer comp)
             {
                 <div class="card-header"><strong>Computer Details</strong></div>
                 <div class="card-body">
@@ -79,7 +79,7 @@
                     </dl>
                 </div>
             }
-            else if (Model is CMDB.Models.NetworkDevice nd)
+            else if (Model is ATLAS.Models.NetworkDevice nd)
             {
                 <div class="card-header"><strong>Network Device Details</strong></div>
                 <div class="card-body">
@@ -96,7 +96,7 @@
                     </dl>
                 </div>
             }
-            else if (Model is CMDB.Models.Printer pr)
+            else if (Model is ATLAS.Models.Printer pr)
             {
                 <div class="card-header"><strong>Printer Details</strong></div>
                 <div class="card-body">
@@ -111,7 +111,7 @@
                     </dl>
                 </div>
             }
-            else if (Model is CMDB.Models.SoftwareApplication sa)
+            else if (Model is ATLAS.Models.SoftwareApplication sa)
             {
                 <div class="card-header"><strong>Application Details</strong></div>
                 <div class="card-body">
@@ -131,7 +131,7 @@
                     </dl>
                 </div>
             }
-            else if (Model is CMDB.Models.MobileDevice md)
+            else if (Model is ATLAS.Models.MobileDevice md)
             {
                 <div class="card-header"><strong>Mobile Device Details</strong></div>
                 <div class="card-body">
@@ -144,7 +144,7 @@
                     </dl>
                 </div>
             }
-            else if (Model is CMDB.Models.CloudResource cr)
+            else if (Model is ATLAS.Models.CloudResource cr)
             {
                 <div class="card-header"><strong>Cloud Resource Details</strong></div>
                 <div class="card-body">
@@ -166,9 +166,9 @@
             <div class="card-header"><strong>Vulnerability Summary</strong></div>
             <div class="card-body">
                 <ul class="list-unstyled mb-0">
-                    <li>Open: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.Open, 0))</strong></li>
-                    <li>In Progress: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.InProgress, 0))</strong></li>
-                    <li>Remediated: <strong>@(grouped.GetValueOrDefault(CMDB.Models.RemediationStatus.Remediated, 0))</strong></li>
+                    <li>Open: <strong>@(grouped.GetValueOrDefault(ATLAS.Models.RemediationStatus.Open, 0))</strong></li>
+                    <li>In Progress: <strong>@(grouped.GetValueOrDefault(ATLAS.Models.RemediationStatus.InProgress, 0))</strong></li>
+                    <li>Remediated: <strong>@(grouped.GetValueOrDefault(ATLAS.Models.RemediationStatus.Remediated, 0))</strong></li>
                     <li>Total: <strong>@Model.AssetVulnerabilities.Count</strong></li>
                 </ul>
             </div>
@@ -190,9 +190,9 @@
                 <td><span class="severity-@av.Vulnerability.Severity.ToString().ToLower()">@av.Vulnerability.Severity</span></td>
                 <td>@(av.Vulnerability.CvssScore?.ToString("F1") ?? "—")</td>
                 <td>
-                    <span class="badge bg-@(av.Status == CMDB.Models.RemediationStatus.Open ? "danger" :
-                                            av.Status == CMDB.Models.RemediationStatus.InProgress ? "warning" :
-                                            av.Status == CMDB.Models.RemediationStatus.Remediated ? "success" : "secondary")">
+                    <span class="badge bg-@(av.Status == ATLAS.Models.RemediationStatus.Open ? "danger" :
+                                            av.Status == ATLAS.Models.RemediationStatus.InProgress ? "warning" :
+                                            av.Status == ATLAS.Models.RemediationStatus.Remediated ? "success" : "secondary")">
                         @av.Status
                     </span>
                 </td>

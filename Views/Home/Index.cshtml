@@ -1,4 +1,4 @@
-@model CMDB.Controllers.DashboardViewModel
+@model ATLAS.Controllers.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -63,7 +63,7 @@
                                 <td><a asp-controller="Assets" asp-action="Details" asp-route-id="@a.Id">@a.Name</a></td>
                                 <td>@a.SubTypeLabel</td>
                                 <td>
-                                    <span class="badge bg-@(a.Status == CMDB.Models.AssetStatus.Active ? "success" : "secondary")">
+                                    <span class="badge bg-@(a.Status == ATLAS.Models.AssetStatus.Active ? "success" : "secondary")">
                                         @a.Status
                                     </span>
                                 </td>

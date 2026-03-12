@@ -1,16 +1,16 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CMDB.Data;
-using CMDB.Models;
+using ATLAS.Data;
+using ATLAS.Models;
 
-namespace CMDB.Controllers;
+namespace ATLAS.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly CmdbContext _db;
+    private readonly AtlasContext _db;
 
-    public HomeController(CmdbContext db) => _db = db;
+    public HomeController(AtlasContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {

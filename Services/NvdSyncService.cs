@@ -1,9 +1,9 @@
 using System.Text.Json;
-using CMDB.Data;
-using CMDB.Models;
+using ATLAS.Data;
+using ATLAS.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CMDB.Services;
+namespace ATLAS.Services;
 
 // ── Result returned to the controller ────────────────────────────────────────
 

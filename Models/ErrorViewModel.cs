@@ -1,4 +1,4 @@
-namespace CMDB.Models;
+namespace ATLAS.Models;
 
 public class ErrorViewModel
 {
