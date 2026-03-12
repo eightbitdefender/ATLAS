@@ -30,7 +30,7 @@ public class NvdSyncService(HttpClient http, IConfiguration config, ILogger<NvdS
     // ── Public entry point ──────────────────────────────────────────────────
 
     public async Task<SyncResult> SyncAsync(
-        CmdbContext db,
+        AtlasContext db,
         string?     keyword  = null,
         string?     severity = null)
     {
