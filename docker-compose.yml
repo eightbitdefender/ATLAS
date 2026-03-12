@@ -1,0 +1,13 @@
+services:
+  atlas:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - atlas-data:/app/data   # persists atlas.db across container restarts
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
+
+volumes:
+  atlas-data:

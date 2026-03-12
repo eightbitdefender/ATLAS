@@ -1,0 +1,10 @@
+bin/
+obj/
+.git/
+.claude/
+*.db
+*.db-shm
+*.db-wal
+artifacts/
+**/*.user
+**/.DS_Store
