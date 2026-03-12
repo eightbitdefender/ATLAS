@@ -13,7 +13,7 @@ builder.Services.AddDbContext<AtlasContext>(options =>
 builder.Services.AddHttpClient<NvdSyncService>(client =>
 {
     client.Timeout = TimeSpan.FromMinutes(10);
-    client.DefaultRequestHeaders.Add("User-Agent", "CMDB/1.0");
+    client.DefaultRequestHeaders.Add("User-Agent", "ATLAS/1.0");
 });
 
 var app = builder.Build();
@@ -22,25 +22,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AtlasContext>();
 
-    // OO Refactor migration: if the Discriminator column is missing (old schema),
-    // drop and recreate the database to apply the new TPH schema.
-    var needsReset = false;
-    try
-    {
-        db.Database.ExecuteSqlRaw("SELECT Discriminator FROM Assets LIMIT 1");
-    }
-    catch
-    {
-        // Column doesn't exist — old single-table schema
-        needsReset = true;
-    }
-
-    if (needsReset)
-    {
-        db.Database.EnsureDeleted();
-    }
-
-    db.Database.EnsureCreated();
+    // Apply any pending EF Core migrations automatically on startup.
+    // This keeps the schema consistent across builds and deployments
+    // without ever dropping data. Add new migrations with:
+    //   dotnet ef migrations add <MigrationName>
+    db.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.
