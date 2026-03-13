@@ -50,6 +50,19 @@ public class SyncProgressTracker
         }
     }
 
+    /// <summary>
+    /// Called after each page is committed to the database so the UI
+    /// can show a running saved-count alongside the fetch progress.
+    /// </summary>
+    public void UpdateSaved(int added, int updated)
+    {
+        lock (_lock)
+        {
+            Added   = added;
+            Updated = updated;
+        }
+    }
+
     public void StartSave()
     {
         lock (_lock) { Phase = "Saving"; }

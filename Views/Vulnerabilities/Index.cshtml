@@ -33,9 +33,14 @@
                 </a>
                 and upserts them into your library — new CVEs are added, existing ones are refreshed.
                 Leave both filters blank to sync the entire NVD database (~250 k CVEs).
-                Without an API key requests are rate-limited (~5 per 30 s); a full unfiltered sync will run
-                in the background for several hours. Add a free key in
-                <code>appsettings.json</code> → <code>"NvdApiKey"</code> to sync the full database in ~15 minutes.
+                @if (!(bool)ViewData["NvdKeyConfigured"]!)
+                {
+                    <span>
+                        Without an API key requests are rate-limited (~5 per 30 s); a full unfiltered sync will run
+                        in the background for several hours. Add a free key in
+                        <code>appsettings.json</code> → <code>"NvdApiKey"</code> to sync the full database in ~15 minutes.
+                    </span>
+                }
             </p>
 
             <form id="syncForm">
@@ -92,7 +97,7 @@
 
                 <div class="d-flex justify-content-between">
                     <small id="syncCountLabel" class="text-muted"></small>
-                    <small id="syncResultLabel" class="text-muted"></small>
+                    <small id="syncSavedLabel" class="text-muted"></small>
                 </div>
 
                 @* Success / error banners shown after completion *@
@@ -256,24 +261,24 @@
             pct.textContent = '100%';
         }
 
-        // Counter
+        // Fetch counter (left side)
         const countEl = document.getElementById('syncCountLabel');
-        if (s.phase === 'Fetching' && s.totalResults > 0) {
+        if (s.totalResults > 0) {
             countEl.textContent =
                 s.totalFetched.toLocaleString() + ' / ' + s.totalResults.toLocaleString() + ' CVEs fetched';
-        } else if (s.phase === 'Saving' || s.isDone) {
+        } else if (s.totalFetched > 0) {
             countEl.textContent = s.totalFetched.toLocaleString() + ' CVEs fetched';
         } else {
             countEl.textContent = '';
         }
 
-        // Result summary (shown when done)
-        const resultEl = document.getElementById('syncResultLabel');
-        if (s.isDone && s.phase === 'Done') {
-            resultEl.textContent =
+        // Saved counter (right side) — updates live after each committed page
+        const savedEl = document.getElementById('syncSavedLabel');
+        if (s.added > 0 || s.updated > 0) {
+            savedEl.textContent =
                 s.added.toLocaleString() + ' added · ' + s.updated.toLocaleString() + ' updated';
         } else {
-            resultEl.textContent = '';
+            savedEl.textContent = '';
         }
 
         // Finished?

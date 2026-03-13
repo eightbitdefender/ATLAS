@@ -12,17 +12,20 @@ public class VulnerabilitiesController : Controller
     private readonly NvdSyncService         _nvd;
     private readonly SyncProgressTracker    _progress;
     private readonly IServiceScopeFactory   _scopeFactory;
+    private readonly IConfiguration         _config;
 
     public VulnerabilitiesController(
         AtlasContext         db,
         NvdSyncService       nvd,
         SyncProgressTracker  progress,
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        IConfiguration       config)
     {
         _db           = db;
         _nvd          = nvd;
         _progress     = progress;
         _scopeFactory = scopeFactory;
+        _config       = config;
     }
 
     // ── Library ──────────────────────────────────────────────────────────────
@@ -33,6 +36,9 @@ public class VulnerabilitiesController : Controller
             .Include(v => v.AssetVulnerabilities)
             .OrderBy(v => v.Severity)
             .ToListAsync();
+
+        ViewData["NvdKeyConfigured"] = !string.IsNullOrWhiteSpace(_config["NvdApiKey"]);
+
         return View(vulns);
     }
 

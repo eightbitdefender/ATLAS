@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using ATLAS.Data;
 using ATLAS.Models;
@@ -41,41 +42,51 @@ public class NvdSyncService(
         var result = new SyncResult();
         try
         {
-            var wrappers = await FetchCvesAsync(keyword, severity);
-            result.Total = wrappers.Count;
-
-            // Switch phase — now saving to DB
-            progress.StartSave();
-
-            // Load existing CVE IDs once to avoid N+1 during upsert
+            // Load all existing CVE IDs once so every page's upsert is O(1)
+            // and we never duplicate a CVE even across page boundaries.
             var existing = await db.Vulnerabilities
                 .Where(v => v.CveId != null)
                 .ToDictionaryAsync(v => v.CveId!);
 
-            foreach (var wrapper in wrappers)
+            // Fetch one NVD page at a time and commit it to the database before
+            // requesting the next page. This means an interrupted sync preserves
+            // everything already saved — on restart those CVEs are simply
+            // refreshed (updated) rather than lost or re-inserted.
+            await foreach (var page in FetchPagesAsync(keyword, severity))
             {
-                var mapped = MapToVulnerability(wrapper);
+                result.Total += page.Count;
 
-                if (existing.TryGetValue(mapped.CveId!, out var dbVuln))
+                foreach (var wrapper in page)
                 {
-                    // Update — preserve the original DiscoveredAt and any asset links
-                    dbVuln.Title                = mapped.Title;
-                    dbVuln.Description          = mapped.Description;
-                    dbVuln.Severity             = mapped.Severity;
-                    dbVuln.CvssScore            = mapped.CvssScore;
-                    dbVuln.AffectedSoftware     = mapped.AffectedSoftware;
-                    dbVuln.RemediationGuidance  = mapped.RemediationGuidance;
-                    result.Updated++;
+                    var mapped = MapToVulnerability(wrapper);
+
+                    if (existing.TryGetValue(mapped.CveId!, out var dbVuln))
+                    {
+                        // Update — preserve the original DiscoveredAt and any asset links
+                        dbVuln.Title               = mapped.Title;
+                        dbVuln.Description         = mapped.Description;
+                        dbVuln.Severity            = mapped.Severity;
+                        dbVuln.CvssScore           = mapped.CvssScore;
+                        dbVuln.AffectedSoftware    = mapped.AffectedSoftware;
+                        dbVuln.RemediationGuidance = mapped.RemediationGuidance;
+                        result.Updated++;
+                    }
+                    else
+                    {
+                        db.Vulnerabilities.Add(mapped);
+                        existing[mapped.CveId!] = mapped; // prevent duplicate insert within same batch
+                        result.Added++;
+                    }
                 }
-                else
-                {
-                    db.Vulnerabilities.Add(mapped);
-                    existing[mapped.CveId!] = mapped; // prevent duplicate insert within same batch
-                    result.Added++;
-                }
+
+                // Commit this page to disk before fetching the next one.
+                // SQLite page writes take ~10–50 ms — negligible versus the NVD
+                // rate-limit delay — but guarantee at-most-one-page data loss on crash.
+                await db.SaveChangesAsync();
+
+                // Keep the tracker's running totals in sync for the UI
+                progress.UpdateSaved(result.Added, result.Updated);
             }
-
-            await db.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -86,21 +97,24 @@ public class NvdSyncService(
         return result;
     }
 
-    // ── Fetch (with pagination + rate-limit delay) ──────────────────────────
+    // ── Page-by-page fetch (yields one NVD page at a time) ─────────────────
+    // IAsyncEnumerable lets the caller save between pages without buffering
+    // the entire result set in memory.
 
-    private async Task<List<NvdVulnWrapper>> FetchCvesAsync(
-        string? keyword, string? severity)
+    private async IAsyncEnumerable<List<NvdVulnWrapper>> FetchPagesAsync(
+        string? keyword, string? severity,
+        [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var all      = new List<NvdVulnWrapper>();
-        int pageSize = 2000; // NVD maximum — minimises number of API round trips
-        int start    = 0;
+        int pageSize     = 2000; // NVD maximum — minimises number of API round trips
+        int start        = 0;
+        int totalFetched = 0;
 
         // NVD rate limit: 5 req / 30 s without API key (≈ 6 s between calls)
         //                50 req / 30 s with API key    (≈ 0.6 s between calls)
         var apiKey = config["NvdApiKey"];
         int delay  = string.IsNullOrWhiteSpace(apiKey) ? 6500 : 700;
 
-        while (true)
+        while (!ct.IsCancellationRequested)
         {
             var url = BuildUrl(keyword, severity, pageSize, start, apiKey);
 
@@ -108,31 +122,32 @@ public class NvdSyncService(
             if (!string.IsNullOrWhiteSpace(apiKey))
                 request.Headers.Add("apiKey", apiKey);
 
-            var response = await http.SendAsync(request);
+            var response = await http.SendAsync(request, ct);
             response.EnsureSuccessStatusCode();
 
-            var body        = await response.Content.ReadAsStringAsync();
+            var body        = await response.Content.ReadAsStringAsync(ct);
             var nvdResponse = JsonSerializer.Deserialize<NvdResponse>(body, JsonOpts);
 
             if (nvdResponse?.Vulnerabilities is null or { Count: 0 })
                 break;
 
-            all.AddRange(nvdResponse.Vulnerabilities);
+            totalFetched += nvdResponse.Vulnerabilities.Count;
 
-            // Report live fetch progress to the tracker
-            progress.UpdateFetch(all.Count, nvdResponse.TotalResults);
+            // Report live fetch progress to the tracker before yielding
+            // so the UI counter updates as soon as the page arrives
+            progress.UpdateFetch(totalFetched, nvdResponse.TotalResults);
+
+            yield return nvdResponse.Vulnerabilities;
 
             // Stop when we have received every matching CVE NVD has
-            if (all.Count >= nvdResponse.TotalResults)
+            if (totalFetched >= nvdResponse.TotalResults)
                 break;
 
             start += nvdResponse.ResultsPerPage;
 
             // Respect rate limit before requesting the next page
-            await Task.Delay(delay);
+            await Task.Delay(delay, ct);
         }
-
-        return all;
     }
 
     private static string BuildUrl(
