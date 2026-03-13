@@ -112,6 +112,10 @@
                         <input asp-for="DomainJoined" class="form-check-input" type="checkbox" />
                         <label asp-for="DomainJoined" class="form-check-label"></label>
                     </div>
+                    <div id="domainNameRow" class="mt-2 d-none">
+                        <label asp-for="DomainName" class="form-label"></label>
+                        <input asp-for="DomainName" class="form-control" placeholder="corp.example.com" />
+                    </div>
                 </div>
             </div>
 
@@ -321,6 +325,7 @@
     CpuModel        = ((Get-CimInstance Win32_Processor)[0].Name).Trim()
     SerialNumber    = ((Get-CimInstance Win32_BIOS).SerialNumber).Trim()
     DomainJoined    = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
+    DomainName      = (Get-CimInstance Win32_ComputerSystem).Domain
 }
 $info | ConvertTo-Json</textarea>
                     <button type="button" class="btn btn-sm btn-secondary position-absolute top-0 end-0 m-2" id="copyScriptBtn">
@@ -362,6 +367,12 @@ $info | ConvertTo-Json</textarea>
                 showSection(categorySelect);
             }
 
+            // Domain Joined → show/hide Domain Name field
+            var djCb = document.getElementById('DomainJoined');
+            var dnRow = document.getElementById('domainNameRow');
+            function toggleDomain() { if (dnRow) dnRow.classList.toggle('d-none', !djCb.checked); }
+            if (djCb) { djCb.addEventListener('change', toggleDomain); toggleDomain(); }
+
             // Copy script
             document.getElementById('copyScriptBtn').addEventListener('click', function () {
                 navigator.clipboard.writeText(document.getElementById('psScript').value).then(function () {
@@ -388,7 +399,8 @@ $info | ConvertTo-Json</textarea>
                     if (data.CpuModel)        { var f = document.getElementById('CpuModel');        if (f) f.value = data.CpuModel; }
                     if (data.SerialNumber)    { var f = document.getElementById('SerialNumber');    if (f) f.value = data.SerialNumber; }
                     var dj = document.getElementById('DomainJoined');
-                    if (dj && data.DomainJoined !== undefined) dj.checked = !!data.DomainJoined;
+                    if (dj && data.DomainJoined !== undefined) { dj.checked = !!data.DomainJoined; toggleDomain(); }
+                    if (data.DomainName)     { var f = document.getElementById('DomainName');     if (f) f.value = data.DomainName; }
                     okDiv.classList.remove('d-none');
                     setTimeout(function () {
                         var modal = bootstrap.Modal.getInstance(document.getElementById('psQueryModal'));

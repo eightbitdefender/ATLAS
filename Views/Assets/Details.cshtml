@@ -103,6 +103,11 @@
                         <dd class="col-sm-7">
                             @if (comp.DomainJoined) { <span class="badge bg-success">Yes</span> } else { <span class="text-muted">No</span> }
                         </dd>
+                        @if (comp.DomainJoined && !string.IsNullOrEmpty(comp.DomainName))
+                        {
+                            <dt class="col-sm-5">Domain</dt>
+                            <dd class="col-sm-7">@comp.DomainName</dd>
+                        }
                     </dl>
                 </div>
             }
@@ -278,6 +283,7 @@
     CpuModel        = ((Get-CimInstance Win32_Processor)[0].Name).Trim()
     SerialNumber    = ((Get-CimInstance Win32_BIOS).SerialNumber).Trim()
     DomainJoined    = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
+    DomainName      = (Get-CimInstance Win32_ComputerSystem).Domain
 }
 $info | ConvertTo-Json</textarea>
                         <button type="button" class="btn btn-sm btn-secondary position-absolute top-0 end-0 m-2" id="copyScriptBtn">

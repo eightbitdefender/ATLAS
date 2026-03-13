@@ -144,6 +144,8 @@ public class AssetsController : Controller
                 computer.SerialNumber = sn.GetString()?.Trim();
             if (root.TryGetProperty("DomainJoined", out var dj))
                 computer.DomainJoined = dj.ValueKind == JsonValueKind.True;
+            if (root.TryGetProperty("DomainName", out var dn) && dn.ValueKind == JsonValueKind.String)
+                computer.DomainName = dn.GetString()?.Trim();
             // Update name from Hostname only when the asset name is still the default placeholder
             if (root.TryGetProperty("Hostname", out var hn) && hn.ValueKind == JsonValueKind.String
                 && !string.IsNullOrWhiteSpace(hn.GetString()))
@@ -179,6 +181,7 @@ public class AssetsController : Controller
                 RamGb          = vm.RamGb,
                 CpuModel       = vm.CpuModel,
                 DomainJoined   = vm.DomainJoined,
+                DomainName     = vm.DomainName,
                 SerialNumber   = vm.SerialNumber,
             },
             AssetCategory.NetworkDevice => new NetworkDevice
@@ -252,6 +255,7 @@ public class AssetsController : Controller
                 c.RamGb           = vm.RamGb;
                 c.CpuModel        = vm.CpuModel;
                 c.DomainJoined    = vm.DomainJoined;
+                c.DomainName      = vm.DomainName;
                 c.SerialNumber    = vm.SerialNumber;
                 break;
             case NetworkDevice nd:
@@ -319,6 +323,7 @@ public class AssetsController : Controller
                 vm.RamGb           = c.RamGb;
                 vm.CpuModel        = c.CpuModel;
                 vm.DomainJoined    = c.DomainJoined;
+                vm.DomainName      = c.DomainName;
                 vm.SerialNumber    = c.SerialNumber;
                 break;
             case NetworkDevice nd:

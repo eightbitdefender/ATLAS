@@ -63,6 +63,9 @@ public class AssetFormViewModel
     [Display(Name = "Domain Joined")]
     public bool DomainJoined { get; set; }
 
+    [MaxLength(100), Display(Name = "Domain")]
+    public string? DomainName { get; set; }
+
     [MaxLength(100), Display(Name = "Serial Number")]
     public string? SerialNumber { get; set; }
 
