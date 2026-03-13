@@ -8,13 +8,21 @@ namespace ATLAS.Controllers;
 
 public class VulnerabilitiesController : Controller
 {
-    private readonly AtlasContext    _db;
-    private readonly NvdSyncService _nvd;
+    private readonly AtlasContext           _db;
+    private readonly NvdSyncService         _nvd;
+    private readonly SyncProgressTracker    _progress;
+    private readonly IServiceScopeFactory   _scopeFactory;
 
-    public VulnerabilitiesController(AtlasContext db, NvdSyncService nvd)
+    public VulnerabilitiesController(
+        AtlasContext         db,
+        NvdSyncService       nvd,
+        SyncProgressTracker  progress,
+        IServiceScopeFactory scopeFactory)
     {
-        _db  = db;
-        _nvd = nvd;
+        _db           = db;
+        _nvd          = nvd;
+        _progress     = progress;
+        _scopeFactory = scopeFactory;
     }
 
     // ── Library ──────────────────────────────────────────────────────────────
@@ -91,24 +99,43 @@ public class VulnerabilitiesController : Controller
 
     // ── NVD Sync ─────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Kicks off an NVD sync in a background Task and returns immediately.
+    /// The UI polls SyncStatus() every 2 s to show live progress.
+    /// </summary>
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SyncFromNvd(
-        string? keyword,
-        string? severity)
+    public IActionResult SyncFromNvd(string? keyword, string? severity)
     {
-        var result = await _nvd.SyncAsync(_db, keyword, severity);
+        if (_progress.IsRunning)
+            return Json(new { started = false, message = "A sync is already in progress." });
 
-        if (result.Success)
-        {
-            TempData["SyncSuccess"] =
-                $"Sync complete — {result.Added} added, {result.Updated} updated " +
-                $"({result.Total} CVEs fetched from NVD).";
-        }
-        else
-        {
-            TempData["SyncError"] = $"Sync failed: {result.Error}";
-        }
+        _progress.Start();
 
-        return RedirectToAction(nameof(Index));
+        // Fire and forget — use a fresh DI scope so the DbContext lifetime is correct
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db  = scope.ServiceProvider.GetRequiredService<AtlasContext>();
+                var nvd = scope.ServiceProvider.GetRequiredService<NvdSyncService>();
+
+                var result = await nvd.SyncAsync(db, keyword, severity);
+                _progress.Complete(result);
+            }
+            catch (Exception ex)
+            {
+                _progress.Complete(new SyncResult { Error = ex.Message });
+            }
+        });
+
+        return Json(new { started = true });
     }
+
+    /// <summary>
+    /// Polled every 2 s by the UI while a sync is running.
+    /// Returns current progress as JSON.
+    /// </summary>
+    [HttpGet]
+    public IActionResult SyncStatus() => Json(_progress.GetStatus());
 }

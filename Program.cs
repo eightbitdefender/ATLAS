@@ -16,6 +16,9 @@ builder.Services.AddHttpClient<NvdSyncService>(client =>
     client.DefaultRequestHeaders.Add("User-Agent", "ATLAS/1.0");
 });
 
+// Singleton tracks live sync progress across the background task and polling requests
+builder.Services.AddSingleton<SyncProgressTracker>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

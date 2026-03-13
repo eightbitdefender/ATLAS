@@ -3,22 +3,6 @@
     ViewData["Title"] = "Vulnerabilities";
 }
 
-@* ── Result alerts (set by SyncFromNvd redirect) ─────────────────────────── *@
-@if (TempData["SyncSuccess"] is string ok)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        ✔ @ok
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["SyncError"] is string err)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        ⚠ @err
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
 @* ── Page header ─────────────────────────────────────────────────────────── *@
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h2 class="mb-0">Vulnerability Library</h2>
@@ -54,7 +38,7 @@
                 <code>appsettings.json</code> → <code>"NvdApiKey"</code> to sync the full database in ~15 minutes.
             </p>
 
-            <form asp-action="SyncFromNvd" method="post">
+            <form id="syncForm">
                 @Html.AntiForgeryToken()
                 <div class="row g-3 align-items-end">
 
@@ -62,7 +46,7 @@
                         <label class="form-label fw-semibold">
                             Keyword <span class="text-muted fw-normal">(optional)</span>
                         </label>
-                        <input type="text" name="keyword" class="form-control"
+                        <input type="text" id="syncKeyword" name="keyword" class="form-control"
                                placeholder="e.g. apache, log4j, windows" />
                     </div>
 
@@ -70,7 +54,7 @@
                         <label class="form-label fw-semibold">
                             Severity filter <span class="text-muted fw-normal">(optional)</span>
                         </label>
-                        <select name="severity" class="form-select">
+                        <select id="syncSeverity" name="severity" class="form-select">
                             <option value="">— All severities —</option>
                             <option value="CRITICAL">Critical</option>
                             <option value="HIGH">High</option>
@@ -80,14 +64,48 @@
                     </div>
 
                     <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary w-100"
-                                onclick="this.disabled=true; this.innerText='Syncing\u2026'; this.form.submit();">
+                        <button type="button" id="syncBtn" class="btn btn-primary w-100"
+                                onclick="startSync()">
                             &#8635; Start Sync
                         </button>
                     </div>
 
                 </div>
             </form>
+
+            @* ── Live progress panel (hidden until sync starts) ────────────── *@
+            <div id="syncProgress" class="mt-4 d-none">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span id="syncPhaseLabel" class="fw-semibold text-primary small"></span>
+                    <span id="syncElapsed" class="text-muted small"></span>
+                </div>
+
+                <div class="progress mb-2" style="height: 18px;">
+                    <div id="syncProgressBar"
+                         class="progress-bar progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         style="width: 0%"
+                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <span id="syncProgressPct"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <small id="syncCountLabel" class="text-muted"></small>
+                    <small id="syncResultLabel" class="text-muted"></small>
+                </div>
+
+                @* Success / error banners shown after completion *@
+                <div id="syncSuccessBanner" class="alert alert-success alert-dismissible fade mt-3 d-none" role="alert">
+                    <span id="syncSuccessText"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div id="syncErrorBanner" class="alert alert-danger alert-dismissible fade mt-3 d-none" role="alert">
+                    <span id="syncErrorText"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -147,3 +165,172 @@
 </table>
 
 <p class="text-muted small">@Model.Count() vulnerabilities in library.</p>
+
+@section Scripts {
+<script>
+    let pollTimer = null;
+
+    async function startSync() {
+        const btn      = document.getElementById('syncBtn');
+        const keyword  = document.getElementById('syncKeyword').value;
+        const severity = document.getElementById('syncSeverity').value;
+        const token    = document.querySelector('#syncForm input[name="__RequestVerificationToken"]').value;
+
+        // Reset UI
+        hideBanners();
+        btn.disabled = true;
+        btn.textContent = 'Syncing\u2026';
+
+        const params = new URLSearchParams({ keyword, severity, __RequestVerificationToken: token });
+
+        try {
+            const resp = await fetch('@Url.Action("SyncFromNvd", "Vulnerabilities")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+            const data = await resp.json();
+
+            if (!data.started) {
+                showError(data.message ?? 'A sync is already running.');
+                btn.disabled = false;
+                btn.innerHTML = '&#8635; Start Sync';
+                return;
+            }
+        } catch (e) {
+            showError('Failed to start sync: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = '&#8635; Start Sync';
+            return;
+        }
+
+        // Show the progress panel and start polling
+        document.getElementById('syncProgress').classList.remove('d-none');
+        pollTimer = setInterval(pollStatus, 2000);
+        pollStatus(); // immediate first check
+    }
+
+    async function pollStatus() {
+        try {
+            const resp = await fetch('@Url.Action("SyncStatus", "Vulnerabilities")');
+            const s    = await resp.json();
+            updateProgress(s);
+        } catch (_) {
+            // Network hiccup — keep polling
+        }
+    }
+
+    function updateProgress(s) {
+        // Phase label
+        const phaseMap = {
+            'Idle':     'Idle',
+            'Fetching': '⬇ Fetching CVEs from NVD\u2026',
+            'Saving':   '💾 Saving to database\u2026',
+            'Done':     '✔ Sync complete',
+            'Failed':   '✘ Sync failed'
+        };
+        document.getElementById('syncPhaseLabel').textContent =
+            phaseMap[s.phase] ?? s.phase;
+
+        // Elapsed time
+        document.getElementById('syncElapsed').textContent =
+            s.elapsedSeconds > 0 ? formatElapsed(s.elapsedSeconds) : '';
+
+        // Progress bar
+        const bar = document.getElementById('syncProgressBar');
+        const pct = document.getElementById('syncProgressPct');
+
+        if (s.phase === 'Fetching' && s.totalResults > 0) {
+            const p = Math.min(100, Math.round((s.totalFetched / s.totalResults) * 100));
+            bar.style.width = p + '%';
+            bar.setAttribute('aria-valuenow', p);
+            pct.textContent = p + '%';
+        } else if (s.phase === 'Saving') {
+            bar.style.width = '100%';
+            bar.setAttribute('aria-valuenow', 100);
+            pct.textContent = '100%';
+        } else if (s.isDone) {
+            bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+            bar.style.width = '100%';
+            bar.setAttribute('aria-valuenow', 100);
+            pct.textContent = '100%';
+        }
+
+        // Counter
+        const countEl = document.getElementById('syncCountLabel');
+        if (s.phase === 'Fetching' && s.totalResults > 0) {
+            countEl.textContent =
+                s.totalFetched.toLocaleString() + ' / ' + s.totalResults.toLocaleString() + ' CVEs fetched';
+        } else if (s.phase === 'Saving' || s.isDone) {
+            countEl.textContent = s.totalFetched.toLocaleString() + ' CVEs fetched';
+        } else {
+            countEl.textContent = '';
+        }
+
+        // Result summary (shown when done)
+        const resultEl = document.getElementById('syncResultLabel');
+        if (s.isDone && s.phase === 'Done') {
+            resultEl.textContent =
+                s.added.toLocaleString() + ' added · ' + s.updated.toLocaleString() + ' updated';
+        } else {
+            resultEl.textContent = '';
+        }
+
+        // Finished?
+        if (s.isDone) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+
+            const btn = document.getElementById('syncBtn');
+            btn.disabled = false;
+            btn.innerHTML = '&#8635; Start Sync';
+
+            bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+
+            if (s.phase === 'Done') {
+                bar.classList.remove('bg-danger');
+                showSuccess(
+                    '✔ Sync complete — ' +
+                    s.added.toLocaleString() + ' CVEs added, ' +
+                    s.updated.toLocaleString() + ' updated in ' +
+                    formatElapsed(s.elapsedSeconds) + '.'
+                );
+                // Reload the table after a short pause so the new data appears
+                setTimeout(() => location.reload(), 2500);
+            } else {
+                bar.classList.add('bg-danger');
+                showError('Sync failed: ' + (s.error ?? 'Unknown error'));
+            }
+        }
+    }
+
+    function formatElapsed(sec) {
+        if (sec < 60) return sec + 's';
+        const m = Math.floor(sec / 60), s = sec % 60;
+        return m + 'm ' + s + 's';
+    }
+
+    function showSuccess(msg) {
+        const el = document.getElementById('syncSuccessBanner');
+        document.getElementById('syncSuccessText').textContent = msg;
+        el.classList.remove('d-none');
+        el.classList.add('show');
+    }
+
+    function showError(msg) {
+        document.getElementById('syncProgress').classList.remove('d-none');
+        const el = document.getElementById('syncErrorBanner');
+        document.getElementById('syncErrorText').textContent = msg;
+        el.classList.remove('d-none');
+        el.classList.add('show');
+    }
+
+    function hideBanners() {
+        ['syncSuccessBanner', 'syncErrorBanner'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.add('d-none');
+            el.classList.remove('show');
+        });
+    }
+</script>
+}

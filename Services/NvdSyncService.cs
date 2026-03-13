@@ -18,7 +18,11 @@ public class SyncResult
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
-public class NvdSyncService(HttpClient http, IConfiguration config, ILogger<NvdSyncService> logger)
+public class NvdSyncService(
+    HttpClient             http,
+    IConfiguration         config,
+    ILogger<NvdSyncService> logger,
+    SyncProgressTracker    progress)
 {
     private const string BaseUrl = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 
@@ -39,6 +43,9 @@ public class NvdSyncService(HttpClient http, IConfiguration config, ILogger<NvdS
         {
             var wrappers = await FetchCvesAsync(keyword, severity);
             result.Total = wrappers.Count;
+
+            // Switch phase — now saving to DB
+            progress.StartSave();
 
             // Load existing CVE IDs once to avoid N+1 during upsert
             var existing = await db.Vulnerabilities
@@ -111,6 +118,9 @@ public class NvdSyncService(HttpClient http, IConfiguration config, ILogger<NvdS
                 break;
 
             all.AddRange(nvdResponse.Vulnerabilities);
+
+            // Report live fetch progress to the tracker
+            progress.UpdateFetch(all.Count, nvdResponse.TotalResults);
 
             // Stop when we have received every matching CVE NVD has
             if (all.Count >= nvdResponse.TotalResults)
