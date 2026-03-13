@@ -43,13 +43,20 @@
                     </div>
                     <div class="row">
                         <div class="col mb-3">
+                            <label asp-for="BusinessStakeholder" class="form-label"></label>
+                            <input asp-for="BusinessStakeholder" class="form-control" placeholder="Business owner or sponsor" />
+                        </div>
+                        <div class="col mb-3">
                             <label asp-for="Department" class="form-label"></label>
                             <input asp-for="Department" class="form-control" />
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col mb-3">
                             <label asp-for="Location" class="form-label"></label>
                             <input asp-for="Location" class="form-control" />
                         </div>
+                        <div class="col mb-3"></div>
                     </div>
                     <div class="mb-0">
                         <label asp-for="Notes" class="form-label"></label>

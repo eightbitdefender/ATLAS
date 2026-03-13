@@ -179,13 +179,14 @@ public class AssetsController : Controller
 
     private static void ApplyCommonFields(Asset asset, AssetFormViewModel vm)
     {
-        asset.Name        = vm.Name;
-        asset.Description = vm.Description;
-        asset.Owner       = vm.Owner;
-        asset.Department  = vm.Department;
-        asset.Location    = vm.Location;
-        asset.Status      = vm.Status;
-        asset.Notes       = vm.Notes;
+        asset.Name               = vm.Name;
+        asset.Description        = vm.Description;
+        asset.Owner              = vm.Owner;
+        asset.BusinessStakeholder = vm.BusinessStakeholder;
+        asset.Department         = vm.Department;
+        asset.Location           = vm.Location;
+        asset.Status             = vm.Status;
+        asset.Notes              = vm.Notes;
     }
 
     private static void ApplyTypeSpecificFields(Asset asset, AssetFormViewModel vm)
@@ -246,14 +247,15 @@ public class AssetsController : Controller
         {
             Id          = asset.Id,
             Category    = asset.Category,
-            Name        = asset.Name,
-            Description = asset.Description,
-            Owner       = asset.Owner,
-            Department  = asset.Department,
-            Location    = asset.Location,
-            Status      = asset.Status,
-            Notes       = asset.Notes,
-            CreatedAt   = asset.CreatedAt,
+            Name               = asset.Name,
+            Description        = asset.Description,
+            Owner              = asset.Owner,
+            BusinessStakeholder = asset.BusinessStakeholder,
+            Department         = asset.Department,
+            Location           = asset.Location,
+            Status             = asset.Status,
+            Notes              = asset.Notes,
+            CreatedAt          = asset.CreatedAt,
         };
 
         switch (asset)

@@ -27,6 +27,9 @@ public class AssetFormViewModel
     [MaxLength(100)]
     public string? Owner { get; set; }
 
+    [MaxLength(100), Display(Name = "Business Stakeholder")]
+    public string? BusinessStakeholder { get; set; }
+
     [MaxLength(100)]
     public string? Department { get; set; }
 
