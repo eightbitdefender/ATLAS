@@ -6,12 +6,37 @@
         .ToDictionary(g => g.Key, g => g.Count());
 }
 
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @success
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @error
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h2>@Model.Name</h2>
         <small class="text-muted">@Model.Category — @Model.SubTypeLabel</small>
     </div>
     <div>
+        @if (Model is ATLAS.Models.Computer)
+        {
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#psQueryModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal me-1" viewBox="0 0 16 16">
+                    <path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9M3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>
+                    <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+                </svg>
+                Query PowerShell
+            </button>
+        }
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
         <a asp-controller="AssetVulnerabilities" asp-action="Create" asp-route-assetId="@Model.Id" class="btn btn-danger">+ Assign Vulnerability</a>
     </div>
@@ -217,3 +242,98 @@
 </table>
 
 <a asp-action="Index" class="btn btn-link">← Back to Assets</a>
+
+@if (Model is ATLAS.Models.Computer)
+{
+    <!-- PowerShell Query Modal -->
+    <div class="modal fade" id="psQueryModal" tabindex="-1" aria-labelledby="psQueryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="psQueryModalLabel">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-terminal me-2" viewBox="0 0 16 16">
+                            <path d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9M3.854 4.146a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>
+                            <path d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+                        </svg>
+                        Query Computer with PowerShell
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2">
+                        <strong>Step 1</strong> — Copy this script and run it in PowerShell on <strong>@Model.Name</strong>:
+                    </p>
+                    <div class="position-relative mb-3">
+                        <textarea id="psScript" class="form-control font-monospace" rows="11" readonly style="font-size:0.82rem; background:#1e1e1e; color:#d4d4d4; resize:none;">$info = [ordered]&#64;{
+    Hostname        = $env:COMPUTERNAME
+    IpAddress       = (Get-NetIPAddress -AddressFamily IPv4 |
+                           Where-Object { $_.IPAddress -notlike '127.*' -and
+                                          $_.IPAddress -notlike '169.254.*' } |
+                           Sort-Object PrefixLength -Descending |
+                           Select-Object -First 1).IPAddress
+    OperatingSystem = (Get-CimInstance Win32_OperatingSystem).Caption
+    RamGb           = [int][Math]::Ceiling(
+                           (Get-CimInstance Win32_PhysicalMemoryArray |
+                            Measure-Object -Property MaxCapacity -Sum).Sum / 1MB)
+    CpuModel        = ((Get-CimInstance Win32_Processor)[0].Name).Trim()
+    SerialNumber    = ((Get-CimInstance Win32_BIOS).SerialNumber).Trim()
+    DomainJoined    = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
+}
+$info | ConvertTo-Json</textarea>
+                        <button type="button" class="btn btn-sm btn-secondary position-absolute top-0 end-0 m-2" id="copyScriptBtn">
+                            Copy
+                        </button>
+                    </div>
+
+                    <p class="text-muted mb-2">
+                        <strong>Step 2</strong> — Paste the JSON output here:
+                    </p>
+                    <textarea id="psResults" class="form-control font-monospace" rows="6"
+                              placeholder='{"Hostname":"...","IpAddress":"...","OperatingSystem":"...","RamGb":16,...}'
+                              style="font-size:0.82rem;"></textarea>
+                    <div id="psParseError" class="text-danger mt-1 d-none">Invalid JSON — paste the full output from the script.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="ApplyPsQuery" asp-route-id="@Model.Id" method="post" id="psApplyForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="resultsJson" id="psResultsHidden" />
+                        <button type="button" class="btn btn-primary" id="psApplyBtn">Apply Results</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // Copy script button
+            document.getElementById('copyScriptBtn').addEventListener('click', function () {
+                var ta = document.getElementById('psScript');
+                navigator.clipboard.writeText(ta.value).then(function () {
+                    var btn = document.getElementById('copyScriptBtn');
+                    btn.textContent = 'Copied!';
+                    btn.classList.replace('btn-secondary', 'btn-success');
+                    setTimeout(function () {
+                        btn.textContent = 'Copy';
+                        btn.classList.replace('btn-success', 'btn-secondary');
+                    }, 2000);
+                });
+            });
+
+            // Apply results — validate JSON then submit
+            document.getElementById('psApplyBtn').addEventListener('click', function () {
+                var raw = document.getElementById('psResults').value.trim();
+                var errDiv = document.getElementById('psParseError');
+                try {
+                    JSON.parse(raw); // validate
+                    errDiv.classList.add('d-none');
+                    document.getElementById('psResultsHidden').value = raw;
+                    document.getElementById('psApplyForm').submit();
+                } catch (e) {
+                    errDiv.classList.remove('d-none');
+                }
+            });
+        })();
+    </script>
+}

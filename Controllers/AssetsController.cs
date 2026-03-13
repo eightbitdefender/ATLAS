@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ATLAS.Data;
@@ -111,6 +112,57 @@ public class AssetsController : Controller
             await _db.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
+    }
+
+    // ── PowerShell Query Apply ────────────────────────────────────────────────
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyPsQuery(int id, [FromForm] string resultsJson)
+    {
+        var asset = await _db.Assets.FindAsync(id);
+        if (asset == null) return NotFound();
+        if (asset is not Computer computer)
+        {
+            TempData["Error"] = "PowerShell query is only supported for Computer assets.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(resultsJson);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("IpAddress", out var ip) && ip.ValueKind == JsonValueKind.String)
+                computer.IpAddress = ip.GetString();
+            if (root.TryGetProperty("OperatingSystem", out var os) && os.ValueKind == JsonValueKind.String)
+                computer.OperatingSystem = os.GetString();
+            if (root.TryGetProperty("RamGb", out var ram) && ram.ValueKind == JsonValueKind.Number)
+                computer.RamGb = ram.GetInt32();
+            if (root.TryGetProperty("CpuModel", out var cpu) && cpu.ValueKind == JsonValueKind.String)
+                computer.CpuModel = cpu.GetString()?.Trim();
+            if (root.TryGetProperty("SerialNumber", out var sn) && sn.ValueKind == JsonValueKind.String)
+                computer.SerialNumber = sn.GetString()?.Trim();
+            if (root.TryGetProperty("DomainJoined", out var dj))
+                computer.DomainJoined = dj.ValueKind == JsonValueKind.True;
+            // Update name from Hostname only when the asset name is still the default placeholder
+            if (root.TryGetProperty("Hostname", out var hn) && hn.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(hn.GetString()))
+            {
+                var hostname = hn.GetString()!;
+                if (computer.Name.Equals("New Computer", StringComparison.OrdinalIgnoreCase))
+                    computer.Name = hostname;
+            }
+
+            computer.LastUpdated = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Asset updated from PowerShell query results.";
+        }
+        catch (Exception)
+        {
+            TempData["Error"] = "Could not parse PowerShell results — make sure you pasted the full JSON output.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // ── Private Helpers ──────────────────────────────────────────────────────
