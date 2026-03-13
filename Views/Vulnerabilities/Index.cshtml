@@ -1,6 +1,9 @@
-@model IEnumerable<ATLAS.Models.Vulnerability>
+@model ATLAS.Models.VulnerabilityIndexViewModel
 @{
     ViewData["Title"] = "Vulnerabilities";
+    int pageWindow = 5;
+    int firstPage  = Math.Max(1, Model.Page - pageWindow);
+    int lastPage   = Math.Min(Model.TotalPages, Model.Page + pageWindow);
 }
 
 @* ── Page header ─────────────────────────────────────────────────────────── *@
@@ -33,7 +36,7 @@
                 </a>
                 and upserts them into your library — new CVEs are added, existing ones are refreshed.
                 Leave both filters blank to sync the entire NVD database (~250 k CVEs).
-                @if (!(bool)ViewData["NvdKeyConfigured"]!)
+                @if (!Model.NvdKeyConfigured)
                 {
                     <span>
                         Without an API key requests are rate-limited (~5 per 30 s); a full unfiltered sync will run
@@ -115,7 +118,96 @@
     </div>
 </div>
 
-@* ── Vulnerability table ──────────────────────────────────────────────────── *@
+@* ── Summary stats bar ────────────────────────────────────────────────────── *@
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-2 px-1">
+                <div class="fs-4 fw-bold">@Model.TotalCount.ToString("N0")</div>
+                <div class="small text-muted">Total CVEs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <a asp-action="Index" asp-route-severity="Critical" class="text-decoration-none">
+            <div class="card text-center h-100 border-danger">
+                <div class="card-body py-2 px-1">
+                    <div class="fs-4 fw-bold text-danger">@Model.CriticalCount.ToString("N0")</div>
+                    <div class="small text-muted">Critical</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-2">
+        <a asp-action="Index" asp-route-severity="High" class="text-decoration-none">
+            <div class="card text-center h-100 border-warning">
+                <div class="card-body py-2 px-1">
+                    <div class="fs-4 fw-bold text-warning">@Model.HighCount.ToString("N0")</div>
+                    <div class="small text-muted">High</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-2">
+        <a asp-action="Index" asp-route-severity="Medium" class="text-decoration-none">
+            <div class="card text-center h-100 border-info">
+                <div class="card-body py-2 px-1">
+                    <div class="fs-4 fw-bold text-info">@Model.MediumCount.ToString("N0")</div>
+                    <div class="small text-muted">Medium</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-2">
+        <a asp-action="Index" asp-route-severity="Low" class="text-decoration-none">
+            <div class="card text-center h-100">
+                <div class="card-body py-2 px-1">
+                    <div class="fs-4 fw-bold text-secondary">@Model.LowCount.ToString("N0")</div>
+                    <div class="small text-muted">Low</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-2 px-1">
+                <div class="small text-muted">Last sync</div>
+                <div class="small fw-semibold">
+                    @(Model.LastSyncDate.HasValue
+                        ? Model.LastSyncDate.Value.ToLocalTime().ToString("yyyy-MM-dd")
+                        : "—")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Filter form ──────────────────────────────────────────────────────────── *@
+<form method="get" asp-action="Index" class="row g-2 mb-3 align-items-end">
+    <div class="col-md-5">
+        <input type="text" name="search" value="@Model.Search"
+               class="form-control" placeholder="Search CVE ID or title keyword…" />
+    </div>
+    <div class="col-md-3">
+        <select name="severity" class="form-select">
+            <option value=""    selected="@(string.IsNullOrEmpty(Model.SeverityFilter) ? "selected" : null)">Critical + High (default)</option>
+            <option value="all" selected="@(Model.SeverityFilter == "all" ? "selected" : null)">— All severities —</option>
+            <option value="Critical"      selected="@(Model.SeverityFilter == "Critical"      ? "selected" : null)">Critical</option>
+            <option value="High"          selected="@(Model.SeverityFilter == "High"          ? "selected" : null)">High</option>
+            <option value="Medium"        selected="@(Model.SeverityFilter == "Medium"        ? "selected" : null)">Medium</option>
+            <option value="Low"           selected="@(Model.SeverityFilter == "Low"           ? "selected" : null)">Low</option>
+            <option value="Informational" selected="@(Model.SeverityFilter == "Informational" ? "selected" : null)">Informational</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+    <div class="col-md-2">
+        <a asp-action="Index" class="btn btn-outline-secondary w-100">Reset</a>
+    </div>
+</form>
+
+@* ── Results table ────────────────────────────────────────────────────────── *@
 <table class="table table-hover table-bordered">
     <thead class="table-dark">
         <tr>
@@ -124,12 +216,11 @@
             <th>Severity</th>
             <th>CVSS</th>
             <th>Affected Software</th>
-            <th>Affected Assets</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var v in Model)
+        @foreach (var v in Model.Items)
         {
             <tr>
                 <td>
@@ -137,9 +228,7 @@
                     {
                         <a href="https://nvd.nist.gov/vuln/detail/@v.CveId"
                            target="_blank" rel="noopener"
-                           class="font-monospace small text-decoration-none">
-                            @v.CveId
-                        </a>
+                           class="font-monospace small text-decoration-none">@v.CveId</a>
                     }
                     else
                     {
@@ -150,26 +239,83 @@
                 <td><span class="severity-@v.Severity.ToString().ToLower()">@v.Severity</span></td>
                 <td>@(v.CvssScore?.ToString("F1") ?? "—")</td>
                 <td><small>@v.AffectedSoftware</small></td>
-                <td>@v.AssetVulnerabilities.Count</td>
                 <td>
                     <a asp-action="Edit"   asp-route-id="@v.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
                     <a asp-action="Delete" asp-route-id="@v.Id" class="btn btn-sm btn-outline-danger">Delete</a>
                 </td>
             </tr>
         }
-        @if (!Model.Any())
+        @if (!Model.Items.Any())
         {
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">
-                    No vulnerabilities yet. Use <strong>Sync from NVD</strong> to import CVEs, or
-                    <a asp-action="Create">add one manually</a>.
+                <td colspan="6" class="text-center text-muted py-4">
+                    No vulnerabilities match your filter.
+                    <a asp-action="Index">Reset filters</a> or use <strong>Sync from NVD</strong> to import CVEs.
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
-<p class="text-muted small">@Model.Count() vulnerabilities in library.</p>
+@* ── Result count + pagination ───────────────────────────────────────────── *@
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <small class="text-muted">
+        @if (Model.TotalFilteredCount > 0)
+        {
+            int from = (Model.Page - 1) * Model.PageSize + 1;
+            int to   = Math.Min(Model.Page * Model.PageSize, Model.TotalFilteredCount);
+            @:Showing @from.ToString("N0")–@to.ToString("N0") of @Model.TotalFilteredCount.ToString("N0") results
+            @:&nbsp;·&nbsp; @Model.TotalCount.ToString("N0") total CVEs in library
+        }
+        else
+        {
+            @:@Model.TotalCount.ToString("N0") total CVEs in library
+        }
+    </small>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Vulnerability pages">
+            <ul class="pagination pagination-sm mb-0">
+                @if (firstPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-search="@Model.Search"
+                           asp-route-severity="@Model.SeverityFilter"
+                           asp-route-page="1">1</a>
+                    </li>
+                    @if (firstPage > 2)
+                    {
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    }
+                }
+                @for (int p = firstPage; p <= lastPage; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-search="@Model.Search"
+                           asp-route-severity="@Model.SeverityFilter"
+                           asp-route-page="@p">@p</a>
+                    </li>
+                }
+                @if (lastPage < Model.TotalPages)
+                {
+                    @if (lastPage < Model.TotalPages - 1)
+                    {
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    }
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-search="@Model.Search"
+                           asp-route-severity="@Model.SeverityFilter"
+                           asp-route-page="@Model.TotalPages">@Model.TotalPages</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
 
 @section Scripts {
 <script>
@@ -300,7 +446,7 @@
                     s.updated.toLocaleString() + ' updated in ' +
                     formatElapsed(s.elapsedSeconds) + '.'
                 );
-                // Reload the table after a short pause so the new data appears
+                // Reload so stats bar updates with fresh counts
                 setTimeout(() => location.reload(), 2500);
             } else {
                 bar.classList.add('bg-danger');

@@ -30,16 +30,114 @@ public class VulnerabilitiesController : Controller
 
     // ── Library ──────────────────────────────────────────────────────────────
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string? search   = null,
+        string? severity = null,
+        int     page     = 1)
     {
-        var vulns = await _db.Vulnerabilities
-            .Include(v => v.AssetVulnerabilities)
-            .OrderBy(v => v.Severity)
+        const int PageSize = 50;
+
+        // ── 1. Summary stats — fast aggregation queries, no entity materialisation ──
+        var totalCount = await _db.Vulnerabilities.CountAsync();
+
+        var countsBySev = await _db.Vulnerabilities
+            .GroupBy(v => v.Severity)
+            .Select(g => new { Severity = g.Key, Count = g.Count() })
             .ToListAsync();
 
-        ViewData["NvdKeyConfigured"] = !string.IsNullOrWhiteSpace(_config["NvdApiKey"]);
+        var lastSync = await _db.Vulnerabilities
+            .MaxAsync(v => (DateTime?)v.DiscoveredAt);
 
-        return View(vulns);
+        // ── 2. Build filtered IQueryable ──────────────────────────────────────────
+        var query = _db.Vulnerabilities.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(v =>
+                (v.CveId != null && v.CveId.Contains(term)) ||
+                v.Title.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(severity) && severity != "all" &&
+            Enum.TryParse<Severity>(severity, ignoreCase: true, out var sev))
+        {
+            query = query.Where(v => v.Severity == sev);
+        }
+        else if (string.IsNullOrWhiteSpace(severity))
+        {
+            // Default landing: Critical + High only — keeps the table useful on first load
+            query = query.Where(v => v.Severity == Severity.Critical ||
+                                     v.Severity == Severity.High);
+        }
+        // severity == "all" → no additional WHERE, show everything
+
+        // ── 3. Filtered count (single COUNT query) ─────────────────────────────────
+        var totalFiltered = await query.CountAsync();
+
+        // ── 4. Paginated fetch — no Include, no full-table materialisation ──────────
+        page = Math.Max(1, page);
+        var items = await query
+            .OrderBy(v => v.Severity)
+            .ThenByDescending(v => v.CvssScore)
+            .Skip((page - 1) * PageSize)
+            .Take(PageSize)
+            .ToListAsync();
+
+        // ── 5. Assemble ViewModel ─────────────────────────────────────────────────
+        var vm = new VulnerabilityIndexViewModel
+        {
+            TotalCount         = totalCount,
+            CriticalCount      = countsBySev.FirstOrDefault(x => x.Severity == Severity.Critical)?.Count      ?? 0,
+            HighCount          = countsBySev.FirstOrDefault(x => x.Severity == Severity.High)?.Count          ?? 0,
+            MediumCount        = countsBySev.FirstOrDefault(x => x.Severity == Severity.Medium)?.Count        ?? 0,
+            LowCount           = countsBySev.FirstOrDefault(x => x.Severity == Severity.Low)?.Count           ?? 0,
+            InformationalCount = countsBySev.FirstOrDefault(x => x.Severity == Severity.Informational)?.Count ?? 0,
+            LastSyncDate       = lastSync,
+            Search             = search,
+            SeverityFilter     = severity,
+            Page               = page,
+            PageSize           = PageSize,
+            Items              = items,
+            TotalFilteredCount = totalFiltered,
+            NvdKeyConfigured   = !string.IsNullOrWhiteSpace(_config["NvdApiKey"])
+        };
+
+        return View(vm);
+    }
+
+    // ── CVE search (AJAX — used by AssetVulnerabilities Create picker) ────────
+
+    /// <summary>
+    /// Returns top-20 CVE matches for a search term.
+    /// GET /Vulnerabilities/SearchVulnerabilities?q=log4j
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> SearchVulnerabilities(string? q)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return Json(Array.Empty<object>());
+
+        var term = q.Trim();
+        var results = await _db.Vulnerabilities
+            .Where(v => (v.CveId != null && v.CveId.Contains(term)) ||
+                        v.Title.Contains(term))
+            .OrderBy(v => v.Severity)
+            .ThenByDescending(v => v.CvssScore)
+            .Take(20)
+            .Select(v => new
+            {
+                v.Id,
+                v.CveId,
+                v.Title,
+                Severity  = v.Severity.ToString(),
+                CvssScore = v.CvssScore.HasValue
+                    ? v.CvssScore.Value.ToString("F1")
+                    : (string?)null
+            })
+            .ToListAsync();
+
+        return Json(results);
     }
 
     public async Task<IActionResult> Details(int id)

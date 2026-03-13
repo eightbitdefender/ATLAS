@@ -1,40 +1,194 @@
 @model ATLAS.Models.AssetVulnerability
 @{
     ViewData["Title"] = "Assign Vulnerability";
+    string? assetName = ViewBag.AssetName as string;
 }
 
-<h2 class="mb-4">Assign Vulnerability to Asset</h2>
+<h2 class="mb-1">Assign Vulnerability to Asset</h2>
+@if (assetName != null)
+{
+    <p class="text-muted mb-4">Asset: <strong>@assetName</strong></p>
+}
 
 <div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create">
+    <div class="col-md-7 col-lg-6">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
+            @* Hidden fields submitted with the form *@
+            <input type="hidden" asp-for="AssetId" />
+            <input type="hidden" asp-for="VulnerabilityId" id="selectedVulnId" />
+
+            @* ── CVE search ───────────────────────────────────────────────── *@
             <div class="mb-3">
-                <label asp-for="AssetId" class="form-label">Asset</label>
-                <select asp-for="AssetId" asp-items="@ViewBag.Assets" class="form-select">
-                    <option value="">— Select Asset —</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="VulnerabilityId" class="form-label">Vulnerability</label>
-                <select asp-for="VulnerabilityId" asp-items="@ViewBag.Vulnerabilities" class="form-select">
-                    <option value="">— Select Vulnerability —</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Status" class="form-label">Remediation Status</label>
-                <select asp-for="Status" asp-items="Html.GetEnumSelectList<ATLAS.Models.RemediationStatus>()" class="form-select"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Notes" class="form-label">Notes</label>
-                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                <label class="form-label fw-semibold">Search CVE Database <span class="text-danger">*</span></label>
+                <input type="text" id="cveSearch" class="form-control"
+                       placeholder="Type CVE ID (e.g. CVE-2021-44228) or keyword (e.g. log4j)…"
+                       autocomplete="off" />
+                <div id="searchResults"
+                     class="list-group shadow-sm mt-1"
+                     style="display:none; max-height:280px; overflow-y:auto; position:relative; z-index:10;"></div>
+                <div class="form-text">Start typing to search your downloaded CVE library.</div>
             </div>
 
-            <button type="submit" class="btn btn-danger">Assign</button>
-            <a asp-controller="Assets" asp-action="Index" class="btn btn-link">Cancel</a>
+            @* ── Selected CVE display (read-only, shown after selection) ─── *@
+            <div id="selectedCvePanel" class="card border-primary mb-3" style="display:none;">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span id="displayCveId" class="font-monospace fw-bold me-2"></span>
+                            <span id="displaySeverity" class="badge me-2"></span>
+                            <span id="displayCvss" class="text-muted small"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="clearSelection()">Change</button>
+                    </div>
+                    <div id="displayTitle" class="small mt-1 text-muted"></div>
+                </div>
+            </div>
+
+            @* ── Editable fields ──────────────────────────────────────────── *@
+            <div class="mb-3">
+                <label asp-for="Status" class="form-label">Remediation Status</label>
+                <select asp-for="Status"
+                        asp-items="Html.GetEnumSelectList<ATLAS.Models.RemediationStatus>()"
+                        class="form-select"></select>
+                <span asp-validation-for="Status" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label">Notes</label>
+                <textarea asp-for="Notes" class="form-control" rows="3"
+                          placeholder="Optional notes about this finding…"></textarea>
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" id="assignBtn" class="btn btn-danger" disabled>Assign Vulnerability</button>
+            <a asp-controller="Assets" asp-action="Details"
+               asp-route-id="@Model.AssetId" class="btn btn-link">Cancel</a>
         </form>
     </div>
 </div>
 
-@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }
+@section Scripts {
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<script>
+    const searchUrl = '@Url.Action("SearchVulnerabilities", "Vulnerabilities")';
+
+    // Severity → Bootstrap badge colour
+    const severityBadge = {
+        'Critical':      'bg-danger',
+        'High':          'bg-warning text-dark',
+        'Medium':        'bg-info text-dark',
+        'Low':           'bg-secondary',
+        'Informational': 'bg-light text-dark border'
+    };
+
+    let debounceTimer = null;
+
+    document.getElementById('cveSearch').addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        const q = this.value.trim();
+        if (q.length < 2) { hideResults(); return; }
+        debounceTimer = setTimeout(() => doSearch(q), 300);
+    });
+
+    // Close results list when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#cveSearch') && !e.target.closest('#searchResults')) {
+            hideResults();
+        }
+    });
+
+    async function doSearch(q) {
+        try {
+            const resp = await fetch(searchUrl + '?q=' + encodeURIComponent(q));
+            const data = await resp.json();
+            renderResults(data);
+        } catch (_) {
+            hideResults();
+        }
+    }
+
+    function renderResults(items) {
+        const box = document.getElementById('searchResults');
+        box.innerHTML = '';
+
+        if (!items.length) {
+            box.innerHTML =
+                '<div class="list-group-item text-muted small py-2">No matching CVEs found.</div>';
+            box.style.display = 'block';
+            return;
+        }
+
+        items.forEach(item => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action py-2';
+
+            const badge = severityBadge[item.severity] ?? 'bg-secondary';
+            btn.innerHTML =
+                `<div class="d-flex align-items-center gap-2">` +
+                `<span class="font-monospace fw-semibold">${escHtml(item.cveId ?? '—')}</span>` +
+                `<span class="badge ${badge}">${escHtml(item.severity)}</span>` +
+                (item.cvssScore ? `<span class="text-muted small">CVSS&nbsp;${escHtml(item.cvssScore)}</span>` : '') +
+                `</div>` +
+                `<div class="small text-muted mt-1">${escHtml(item.title)}</div>`;
+
+            btn.addEventListener('click', () => selectVuln(item));
+            box.appendChild(btn);
+        });
+
+        box.style.display = 'block';
+    }
+
+    function selectVuln(item) {
+        // Store the FK in the hidden input
+        document.getElementById('selectedVulnId').value = item.id;
+
+        // Populate the read-only display card
+        document.getElementById('displayCveId').textContent  = item.cveId ?? '—';
+        document.getElementById('displayTitle').textContent  = item.title;
+
+        const badge = document.getElementById('displaySeverity');
+        badge.textContent = item.severity;
+        badge.className   = 'badge me-2 ' + (severityBadge[item.severity] ?? 'bg-secondary');
+
+        document.getElementById('displayCvss').textContent =
+            item.cvssScore ? 'CVSS ' + item.cvssScore : '';
+
+        // Show display card, hide search input
+        document.getElementById('selectedCvePanel').style.display = 'block';
+        document.getElementById('cveSearch').style.display        = 'none';
+        hideResults();
+
+        // Enable the submit button
+        document.getElementById('assignBtn').disabled = false;
+    }
+
+    function clearSelection() {
+        document.getElementById('selectedVulnId').value           = '';
+        document.getElementById('selectedCvePanel').style.display = 'none';
+        document.getElementById('cveSearch').style.display        = 'block';
+        document.getElementById('cveSearch').value                = '';
+        document.getElementById('assignBtn').disabled             = true;
+        document.getElementById('cveSearch').focus();
+    }
+
+    function hideResults() {
+        const box = document.getElementById('searchResults');
+        box.style.display = 'none';
+        box.innerHTML     = '';
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+</script>
+}

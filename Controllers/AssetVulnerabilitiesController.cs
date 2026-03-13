@@ -14,7 +14,13 @@ public class AssetVulnerabilitiesController : Controller
 
     public async Task<IActionResult> Create(int? assetId)
     {
-        await PopulateSelectLists(assetId);
+        ViewBag.AssetName = assetId.HasValue
+            ? await _db.Assets
+                .Where(a => a.Id == assetId.Value)
+                .Select(a => a.Name)
+                .FirstOrDefaultAsync()
+            : null;
+
         return View(new AssetVulnerability { AssetId = assetId ?? 0 });
     }
 
@@ -23,7 +29,10 @@ public class AssetVulnerabilitiesController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await PopulateSelectLists(av.AssetId);
+            ViewBag.AssetName = await _db.Assets
+                .Where(a => a.Id == av.AssetId)
+                .Select(a => a.Name)
+                .FirstOrDefaultAsync();
             return View(av);
         }
         av.DetectedAt = DateTime.UtcNow;
