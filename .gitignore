@@ -22,3 +22,7 @@ obj/
 
 ## Published output
 publish/
+
+## Local secrets — never commit API keys or connection strings
+appsettings.Development.json
+appsettings.Local.json
