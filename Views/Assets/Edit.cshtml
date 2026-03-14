@@ -378,7 +378,7 @@ $info | ConvertTo-Json</textarea>
                 if (el) el.classList.remove('d-none');
             }
             var categorySelect = document.getElementById('Category');
-            if (categorySelect) {
+            if (categorySelect && categorySelect.tagName === 'SELECT') {
                 categorySelect.addEventListener('change', function (e) { showSection(e.target.options[e.target.selectedIndex].text.replace(/\s+/g, '')); });
                 showSection(categorySelect.options[categorySelect.selectedIndex].text.replace(/\s+/g, ''));
             } else {
